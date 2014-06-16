@@ -20,21 +20,21 @@ for i = 1:length(ctxData);
     ctxDataOut(i).positionDist2  = trialData.positionDist2;   
     ctxDataOut(i).positionCue    = trialData.positionCue;
 
-    ctxDataOut(i).TargetDim  = trialData.TargetDim;
-    ctxDataOut(i).Dist1Dim   = trialData.Dist1Dim;
-    ctxDataOut(i).Dist2Dim   = trialData.Dist2Dim;
+    ctxDataOut(i).targetDim  = trialData.targetDim;
+    ctxDataOut(i).dist1Dim   = trialData.dist1Dim;
+    ctxDataOut(i).dist2Dim   = trialData.dist2Dim;
 
-    ctxDataOut(i).StimDirection   = trialData.StimDirection;
-    ctxDataOut(i).Color_In        = trialData.Color_In;
-    ctxDataOut(i).Color_In_dim    = trialData.Color_In_dim;
-    ctxDataOut(i).Color_Out1      = trialData.Color_Out1;
-    ctxDataOut(i).Color_Out1_dim  = trialData.Color_Out1_dim;
-    ctxDataOut(i).Color_Out2      = trialData.Color_Out2;
-    ctxDataOut(i).Color_Out2_dim  = trialData.Color_Out2_dim;
-    ctxDataOut(i).MicroStim       = trialData.MicroStim;
-    ctxDataOut(i).Drug            = trialData.Drug;
-    ctxDataOut(i).AttendIn        = trialData.AttendIn;
-    ctxDataOut(i).Attend          = trialData.Attend;
+    ctxDataOut(i).stimDirection   = trialData.stimDirection;
+    ctxDataOut(i).color_In        = trialData.color_In;
+    ctxDataOut(i).color_In_dim    = trialData.color_In_dim;
+    ctxDataOut(i).color_Out1      = trialData.color_Out1;
+    ctxDataOut(i).color_Out1_dim  = trialData.color_Out1_dim;
+    ctxDataOut(i).color_Out2      = trialData.color_Out2;
+    ctxDataOut(i).color_Out2_dim  = trialData.color_Out2_dim;
+    ctxDataOut(i).microStim       = trialData.microStim;
+    ctxDataOut(i).drug            = trialData.drug;
+    ctxDataOut(i).attendIn        = trialData.attendIn;
+    ctxDataOut(i).attend          = trialData.attend;
     ctxDataOut(i).error           = trialData.error;
  else 
     ctxDataOut(i).error           = trialData.error; 

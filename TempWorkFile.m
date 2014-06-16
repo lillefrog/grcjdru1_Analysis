@@ -41,9 +41,14 @@ dividedSpikeArray = NLX_DivideSpikeArray(spikeArray,dividedEventfile);
 clear spikeArray isSelectedCell
 
 % read the cortex file and align the data
-[ctxData] = CTX_Read2Struct(cortexFilename);
-ctxDataOut = cleanCtxGrcjdru1Events(ctxData);
+[ctxDataTemp] = CTX_Read2Struct(cortexFilename);
+ctxData = cleanCtxGrcjdru1Events(ctxDataTemp);
+clear ctxDataTemp
 
+nrTrials = length(ctxData);
+if ~( (length(dividedSpikeArray)==nrTrials) && (length(dividedEventfile)==nrTrials) );
+    error('Number of trials not consistent');
+end
 
 %[trialData] = Extract_CTX_TrialParm_Grcjdru1(cortex_event_arr);
  % some function to align the data and make sure it is aligned correctly
@@ -51,8 +56,16 @@ ctxDataOut = cleanCtxGrcjdru1Events(ctxData);
 %% Analyze 
 
 % select the trials we want
+% go trough the trails and find the first spike skip all trials before that
+% one since they are probably outside the area of interest
 %   check for currupt trials
 %   group the trials in drug and no drug
+
+
+isError   = [ctxData.error]';
+isDrug    = [ctxData.drug]';
+attend    = [ctxData.attend]';
+targetDim = [ctxData.targetDim]';
 
 % Plot the data
 %   get the spikes for the groups

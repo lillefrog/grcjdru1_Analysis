@@ -50,31 +50,31 @@ parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
     extractedData.positionDist2 = [parm(13)/100 , parm(14)/100];    
     extractedData.positionCue = [parm(15)/100 , parm(16)/100];
     
-    extractedData.TargetDim = parm(17) + parm(18)*2 + parm(19)*3;
-    extractedData.Dist1Dim = parm(20) + parm(21)*2 + parm(22)*3;
-    extractedData.Dist2Dim = parm(23) + parm(24)*2 + parm(25)*3;
+    extractedData.targetDim = parm(17) + parm(18)*2 + parm(19)*3;
+    extractedData.dist1Dim = parm(20) + parm(21)*2 + parm(22)*3;
+    extractedData.dist2Dim = parm(23) + parm(24)*2 + parm(25)*3;
     
-    extractedData.StimDirection = parm(26);
+    extractedData.stimDirection = parm(26);
     
-    extractedData.Color_In        = [parm(27) parm(28) parm(29)];
-    extractedData.Color_In_dim    = [parm(30) parm(31) parm(32)];
-    extractedData.Color_Out1      = [parm(33) parm(34) parm(35)];
-    extractedData.Color_Out1_dim  = [parm(36) parm(37) parm(38)];
-    extractedData.Color_Out2      = [parm(39) parm(40) parm(41)];
-    extractedData.Color_Out2_dim  = [parm(42) parm(43) parm(44)];
-    extractedData.MicroStim   = parm(45);
-    extractedData.Drug    = parm(46);
+    extractedData.color_In        = [parm(27) parm(28) parm(29)];
+    extractedData.color_In_dim    = [parm(30) parm(31) parm(32)];
+    extractedData.color_Out1      = [parm(33) parm(34) parm(35)];
+    extractedData.color_Out1_dim  = [parm(36) parm(37) parm(38)];
+    extractedData.color_Out2      = [parm(39) parm(40) parm(41)];
+    extractedData.color_Out2_dim  = [parm(42) parm(43) parm(44)];
+    extractedData.microStim   = parm(45);
+    extractedData.drug    = (parm(46)==1);
 
-    extractedData.AttendIn = (parm(3)==parm(9)) & (parm(4)==parm(10));
+    extractedData.attendIn = (parm(3)==parm(9)) & (parm(4)==parm(10));
     
     if (parm(9)==parm(3)) && (parm(10)==parm(4)) % Target = RF
-       extractedData.Attend = 1;
+       extractedData.attend = 1;
     elseif (parm(9)==parm(5)) && (parm(10)==parm(6)) % Target = Out1
-        extractedData.Attend = 2;
+        extractedData.attend = 2;
     elseif (parm(9)==parm(7)) && (parm(10)==parm(8)) % Target = Out2
-        extractedData.Attend = 3;
+        extractedData.attend = 3;
     else
-        extractedData.Attend = -1;
+        extractedData.attend = -1;
     end
     
     extractedData.error = false; % Set the error to 0 since everything worked
