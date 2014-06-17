@@ -62,12 +62,36 @@ end
 %   group the trials in drug and no drug
 
 
-isError   = [ctxData.error]';
-isDrug    = [ctxData.drug]';
-attend    = [ctxData.attend]';
-targetDim = [ctxData.targetDim]';
+% isDrug    = [ctxData.drug]';
+% attend    = [ctxData.attend]';
+% condition = [ctxData.condition]';
 
+isError   = [ctxData.error]';  % did the program find any errors 
+isCorrect = [ctxData.correctTrial]'; % did the monkey compleate the task
+targetDim = [ctxData.targetDim]'; % When did the target dim 1,2 or 3
+rfDim = [ctxData.RFDim]'; % when did the object in RF dim?
+validTrials = ((isCorrect) | (~isError)) & ((rfDim==1) | (rfDim==2));  % Find trials that are correct, has no errors, and dim 1 or 2
+clear isError isCorrect targetDim
+
+cortexEvents = ctxData(validTrials);
+nlxEvents = dividedEventfile(validTrials);
+spikeArrays = dividedSpikeArray(validTrials);
 % Plot the data
 %   get the spikes for the groups
 %   make histograms
 % 
+
+% plot
+
+x =[cortexEvents.RFDim]'==1 & [cortexEvents.targetDim]'==1; % first dimming is in the RF and is the target
+y =[cortexEvents.RFDim]'==1 & ~([cortexEvents.targetDim]'==1); % first dimming is in the RF and is not the target
+
+x =[cortexEvents.RFDim]'==2 & [cortexEvents.targetDim]'==2; % second dimming is in the RF and is the target
+y =[cortexEvents.RFDim]'==2 & ~([cortexEvents.targetDim]'==2); % second dimming is in the RF and is not the target
+
+% [figHandle,maxSpikeRate] = PlotRast(Group1,Group2,AlignEvent,tWin,mode);
+% [figHandle,maxSpikeRate] = ScaleRast(figHandle,maxSpikeRate);
+
+
+
+

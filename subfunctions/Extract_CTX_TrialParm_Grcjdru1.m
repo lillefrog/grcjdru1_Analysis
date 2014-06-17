@@ -14,7 +14,7 @@ function [extractedData,newEventArray] = Extract_CTX_TrialParm_Grcjdru1(cortex_e
 
 PARAMBASE = 10000; 
 HEADERLENGTH = 47;
-extractedData.error = true;
+extractedData.error = false;
 
 
 
@@ -23,14 +23,17 @@ extractedData.error = true;
 [NrEvents,NrColums] = size(cortex_event_arr); % get the size of data
 
 if NrEvents<(HEADERLENGTH+2) % check if there is enough elements
+   extractedData.error = true; 
    return  
 end    
 
 HeaderEndpoints = find(cortex_event_arr(:,2)==300,2,'first'); % find start and stop of header
 
 if length(HeaderEndpoints)<2 % check to see if there is a header
+   extractedData.error = true; 
    return 
 elseif (HeaderEndpoints(2)-HeaderEndpoints(1)) ~= HEADERLENGTH % check to see if it has the right length
+   extractedData.error = true; 
    return     
 end
 
@@ -40,7 +43,7 @@ isHeader = false(NrEvents,1);
 isHeader((HeaderEndpoints(1)+1):HeaderEndpoints(2)-1) = true ;
 parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
 
-
+    % positions
     extractedData.fixpointXY = [parm(1)/100 , parm(2)/100];
     extractedData.positionRF = [parm(3)/100 , parm(4)/100]; % Receptive field position (X,Y)
     extractedData.positionOut1 = [parm(5)/100 , parm(6)/100];
@@ -50,23 +53,26 @@ parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
     extractedData.positionDist2 = [parm(13)/100 , parm(14)/100];    
     extractedData.positionCue = [parm(15)/100 , parm(16)/100];
     
+    % order of dimming
     extractedData.targetDim = parm(17) + parm(18)*2 + parm(19)*3;
     extractedData.dist1Dim = parm(20) + parm(21)*2 + parm(22)*3;
     extractedData.dist2Dim = parm(23) + parm(24)*2 + parm(25)*3;
     
+    % Other info
     extractedData.stimDirection = parm(26);
+    extractedData.microStim   = parm(45);
+    extractedData.drug    = (parm(46)==1);
     
+    % colors
     extractedData.color_In        = [parm(27) parm(28) parm(29)];
     extractedData.color_In_dim    = [parm(30) parm(31) parm(32)];
     extractedData.color_Out1      = [parm(33) parm(34) parm(35)];
     extractedData.color_Out1_dim  = [parm(36) parm(37) parm(38)];
     extractedData.color_Out2      = [parm(39) parm(40) parm(41)];
     extractedData.color_Out2_dim  = [parm(42) parm(43) parm(44)];
-    extractedData.microStim   = parm(45);
-    extractedData.drug    = (parm(46)==1);
 
-    extractedData.attendIn = (parm(3)==parm(9)) & (parm(4)==parm(10));
-    
+
+    % Where is the monkey attending
     if (parm(9)==parm(3)) && (parm(10)==parm(4)) % Target = RF
        extractedData.attend = 1;
     elseif (parm(9)==parm(5)) && (parm(10)==parm(6)) % Target = Out1
@@ -75,10 +81,48 @@ parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
         extractedData.attend = 3;
     else
         extractedData.attend = -1;
+        extractedData.error = true; 
     end
     
-    extractedData.error = false; % Set the error to 0 since everything worked
+
+    % When does RF dim
+    if (extractedData.positionRF == extractedData.positionTarget)
+        extractedData.RFDim = extractedData.targetDim;
+    elseif (extractedData.positionRF == extractedData.positionDist1)
+        extractedData.RFDim = extractedData.dist1Dim;
+    elseif (extractedData.positionRF == extractedData.positionDist2)
+        extractedData.RFDim = extractedData.dist2Dim;
+    else
+        extractedData.RFDim = -1;
+    end
     
+    % When does Out1 dim
+    if (extractedData.positionOut1 == extractedData.positionTarget)
+        extractedData.Out1Dim = extractedData.targetDim;
+    elseif (extractedData.positionOut1 == extractedData.positionDist1)
+        extractedData.Out1Dim = extractedData.dist1Dim;
+    elseif (extractedData.positionOut1 == extractedData.positionDist2)
+        extractedData.Out1Dim = extractedData.dist2Dim;
+    else
+        extractedData.Out1Dim = -1;
+        extractedData.error = true; 
+    end
+    
+    % When does Out2 dim
+    if (extractedData.positionOut2 == extractedData.positionTarget)
+        extractedData.Out2Dim = extractedData.targetDim;
+    elseif (extractedData.positionOut2 == extractedData.positionDist1)
+        extractedData.Out2Dim = extractedData.dist1Dim;
+    elseif (extractedData.positionOut2 == extractedData.positionDist2)
+        extractedData.Out2Dim = extractedData.dist2Dim;
+    else
+        extractedData.Out2Dim = -1;
+        extractedData.error = true; 
+    end
+
+    
+    
+ 
     newEventArray= cortex_event_arr(~isHeader,:); % the event array without the header
     
 
