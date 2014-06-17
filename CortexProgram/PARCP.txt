@@ -1,0 +1,40 @@
+StimDir =1;
+
+FIX_x = 0;
+FIX_y = 0;
+RF_x = 7; 
+RF_y = 0;
+OUT_1_x = 0;
+OUT_1_y = 7;
+OUT_2_x = -7;
+OUT_2_y = 0;
+
+CUE_RADECC = 0;
+CUE_ECC = 0;
+
+RGB_Red_RF_In = 180;
+RGB_Green_RF_In = 0;
+RGB_Blue_RF_In = 0;
+
+RGB_Red_RF_Out_1 = 0;
+RGB_Green_RF_Out_1 = 0;
+RGB_Blue_RF_Out_1 = 255;
+ 
+RGB_Red_RF_Out_2 =0
+RGB_Green_RF_Out_2 =180;
+RGB_Blue_RF_Out_2 = 0;
+
+RGB_Red_RF_In_Dimmed = 80;
+RGB_Green_RF_In_Dimmed = 0;
+RGB_Blue_RF_In_Dimmed = 0;
+
+RGB_Red_RF_Out_1_Dimmed = 0;
+RGB_Green_RF_Out_1_Dimmed = 0;
+RGB_Blue_RF_Out_1_Dimmed = 100;
+ 
+RGB_Red_RF_Out_2_Dimmed =0
+RGB_Green_RF_Out_2_Dimmed =80;
+RGB_Blue_RF_Out_2_Dimmed = 0;
+
+
+

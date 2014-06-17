@@ -20,19 +20,19 @@ extractedData.error = false;
 
 %% error checking
 
-[NrEvents,NrColums] = size(cortex_event_arr); % get the size of data
+[nrEvents,nrColums] = size(cortex_event_arr); % get the size of data
 
-if NrEvents<(HEADERLENGTH+2) % check if there is enough elements
+if nrEvents<(HEADERLENGTH+2) % check if there is enough elements
    extractedData.error = true; 
    return  
 end    
 
-HeaderEndpoints = find(cortex_event_arr(:,2)==300,2,'first'); % find start and stop of header
+headerEndpoints = find(cortex_event_arr(:,2)==300,2,'first'); % find start and stop of header
 
-if length(HeaderEndpoints)<2 % check to see if there is a header
+if length(headerEndpoints)<2 % check to see if there is a header
    extractedData.error = true; 
    return 
-elseif (HeaderEndpoints(2)-HeaderEndpoints(1)) ~= HEADERLENGTH % check to see if it has the right length
+elseif (headerEndpoints(2)-headerEndpoints(1)) ~= HEADERLENGTH % check to see if it has the right length
    extractedData.error = true; 
    return     
 end
@@ -40,7 +40,7 @@ end
 
 %% extract all the data
 isHeader = false(NrEvents,1);
-isHeader((HeaderEndpoints(1)+1):HeaderEndpoints(2)-1) = true ;
+isHeader((headerEndpoints(1)+1):headerEndpoints(2)-1) = true ;
 parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
 
     % positions
@@ -87,36 +87,36 @@ parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
 
     % When does RF dim
     if (extractedData.positionRF == extractedData.positionTarget)
-        extractedData.RFDim = extractedData.targetDim;
+        extractedData.rfDim = extractedData.targetDim;
     elseif (extractedData.positionRF == extractedData.positionDist1)
-        extractedData.RFDim = extractedData.dist1Dim;
+        extractedData.rfDim = extractedData.dist1Dim;
     elseif (extractedData.positionRF == extractedData.positionDist2)
-        extractedData.RFDim = extractedData.dist2Dim;
+        extractedData.rfDim = extractedData.dist2Dim;
     else
-        extractedData.RFDim = -1;
+        extractedData.rfDim = -1;
     end
     
     % When does Out1 dim
     if (extractedData.positionOut1 == extractedData.positionTarget)
-        extractedData.Out1Dim = extractedData.targetDim;
+        extractedData.out1Dim = extractedData.targetDim;
     elseif (extractedData.positionOut1 == extractedData.positionDist1)
-        extractedData.Out1Dim = extractedData.dist1Dim;
+        extractedData.out1Dim = extractedData.dist1Dim;
     elseif (extractedData.positionOut1 == extractedData.positionDist2)
-        extractedData.Out1Dim = extractedData.dist2Dim;
+        extractedData.out1Dim = extractedData.dist2Dim;
     else
-        extractedData.Out1Dim = -1;
+        extractedData.out1Dim = -1;
         extractedData.error = true; 
     end
     
     % When does Out2 dim
     if (extractedData.positionOut2 == extractedData.positionTarget)
-        extractedData.Out2Dim = extractedData.targetDim;
+        extractedData.out2Dim = extractedData.targetDim;
     elseif (extractedData.positionOut2 == extractedData.positionDist1)
-        extractedData.Out2Dim = extractedData.dist1Dim;
+        extractedData.out2Dim = extractedData.dist1Dim;
     elseif (extractedData.positionOut2 == extractedData.positionDist2)
-        extractedData.Out2Dim = extractedData.dist2Dim;
+        extractedData.out2Dim = extractedData.dist2Dim;
     else
-        extractedData.Out2Dim = -1;
+        extractedData.out2Dim = -1;
         extractedData.error = true; 
     end
 

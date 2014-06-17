@@ -1,0 +1,1984 @@
+// GratCPar2 -- Three Grating, Color is changed in the PARAM files. Its based around the RF , OUT1 and OUT2 definition
+
+
+
+
+#include "css_inc.h"
+#include "AL_INCL/AL_PARAM.STT"
+#include "AL_INCL/AL_CODES.STT"
+#include "AL_INCL/AT_CODES.STT"
+
+
+
+//----------------------------------------------------
+#define FIX_CONTROL 1
+
+// STIMULI
+// #define TARGETECC 3.0
+// #define CUESTARTOFFSET 0.0
+#define FRAMENUMPERCYCLE	55
+#define CYCLENUM                2 
+#define MICRO_STIMULATION_PROB  0.0   // Propability that on any given trial a microstimulation occurs
+
+
+// PERFORMANCE CONTROL
+#define NumberOfTrials 		1000 //Number of Trials which are used to calculate performance
+
+
+// TIMING
+#define FIX_WAIT_TIME           5000 // Wait time for fixation, if over trial is an error and ends
+#define PRE_TEST_TIME           590 // Fixation time before Stimulus + Distractor appearing // 600 is around 612 ms 
+#define PRE_CUE_TIME_MIN        300 // Test and Distractor presesnt waiting for feature cue // 220 is around 500ms
+#define PRE_CUE_TIME_MAX        300 // Test and Distractor presesnt waiting for feature cue
+#define PRE_MICROSTIM_TIME_MIN	200 //
+#define PRE_MICROSTIM_TIME_MAX	600 //
+#define PRE_FIRST_DIM_TIME_MIN  490 // Minimum time after Cue before first dimming // 350 is around 700ms
+#define PRE_FIRST_DIM_TIME_MAX  1000 // Maximum  time after Cue before first dimming // 800 is around 1800ms
+#define REACTION_TIME_MAX       600 // Maximum allowed time for releasing the bar, // NOT!!! minimum wait time between first and second dimming
+#define REACTION_TIME_MIN       80 // Bar releases before this are counted as early
+#define PRE_SECON_DIM_TIME_MIN  490 // min TIME between first and second dimming, must be longer than reaction time max // 350 is around 700ms
+#define PRE_SECON_DIM_TIME_MAX  700 // max TIME between first and second dimming, must be longer than reaction time max // 500 is around 1000ms
+#define INTERTRIAL 		0 // time after a correct trial before fixspot appears
+#define PENALTY_TIME            0 // time after a incorrect trial before fixspot appears
+#define POST_FIXATION_TIME      80 // fixation time after realising the bar correctly 
+
+// MS_TIMER
+#define FIX_WAIT_TIMER		7
+#define PRE_CUE_TIMER		8
+#define CUE_TIMER		1
+#define TEST_DELAY_TIMER	2
+#define PRE_DIM_TIMER		3
+#define FIRST_DIM_TIMER		4
+#define SECON_DIM_TIMER		5
+#define REACTION_TIMER		6
+#define FIXCHECK_TIMER          9
+
+
+// LUT Positions of Grating colored bars
+
+#define RFIn_LUTIndex   	200
+#define RFOut1_LUTIndex		219
+#define RFOut2_LUTIndex		255
+#define RFIn_Grey_LUTIndex	218
+#define RFOut1_Grey_LUTIndex	236
+#define RFOut2_Grey_LUTIndex	237
+// filenames
+#define RF_PARAM_FILE  "PAR.txt"
+// #define MICROSTIM_PERFORMANCE_FILE_NAME "MP.txt"
+// #define MSTIM_PROB_FACTOR_FILE_NAME "M.bin"
+#define PERFORMANCE_NEW_FILE_NAME "c:\cortex\pascoe\PERNEW.bin"
+#define PERFORMANCE_OLD_FILE_NAME "c:\cortex\pascoe\PEROLD.bin"
+
+/********************************************/
+/****  Function Declarations             ****/
+/********************************************/
+#include "AL_INCL/AL_FDEC.STT"
+
+
+//################################################################################
+main()
+{
+	int Help;
+	float Helper,Helper1;
+	float Helper2;
+	int a,b;	
+	int Test[11];
+	// int currArrayValue;
+	long fp,fpOld,fpNew;
+	int k,p;
+	int NewFileFlag;
+	float CorrStimTrials[36]; 
+	float AllStimTrials[36];
+	float CorrNStimTrials[36];
+	float AllNStimTrials[36];
+	float MStimPerformance[36];
+	float Performance[36]; 
+	float MStimProb[36];
+	int Condition;
+	int t;
+	int PerformanceNew,PerformanceOld;
+	int MicroStimMarker,CorrectMarker;
+	float PerformanceRatio;
+	float WeightingFactor;
+	int MICROSTIM;
+	
+
+	float X_RF_FINAL,Y_RF_FINAL,X_OUT_1_FINAL,Y_OUT_1_FINAL,X_OUT_2_FINAL,Y_OUT_2_FINAL;
+	float CueX_RF,CueY_RF,CueX_OUT_1,CueY_OUT_1,CueX_OUT_2,CueY_OUT_2;
+	float TargetX,TargetY,Dist1X,Dist1Y,Dist2X,Dist2Y;  
+	float X_RF, Y_RF,X_OUT_1,Y_OUT_1,X_OUT_2,Y_OUT_2;
+	float CueX, CueY;  
+	float r, Theta_RF,Theta_Out_1,Theta_Out_2;
+	int Individual_Placement;
+	int Cue_Ecc;	
+	int Cue_RadEcc;
+	int TestPos, DistPos;
+	
+	///TIMING
+	int ReactionTime;
+	int cFi;
+	int PreFirstDimFrameNum,PreSeconDimFrameNum,PreThirdDimFrameNum,PreCueFrameNum,ReactionMinFrameNum,ReactionMaxFrameNum;
+	int CurrCueFrameNr;
+	int PreCueTime;
+	int CueDimFrame, FirstDimFrame, SeconDimFrame,ThirdDimFrame;
+	int PreFirstDimTime,PreSeconDimTime,PreThirdDimTime;
+	int DimFrameNum,PreMicroStimTime,PreMicroStimFrameNum;
+	int Pause;
+	
+	//Flags
+	int TargetFirstFlag,TargetSeconFlag,TargetThirdFlag;
+	int Dist1FirstFlag,Dist1SeconFlag,Dist1ThirdFlag;
+	int Dist2FirstFlag,Dist2SeconFlag,Dist2ThirdFlag;
+	int eye_error;
+	int MicroStimulationFlag;
+	int DrugFlag;
+	
+	//Counting
+	int CurrentTrial, CurrentBlock, CurrentCondition; //, CurrentStimulus
+	int i;
+	int rewpulse_num,rewpulse_time ;
+
+	//Conditions
+	int PositionCondition;
+	float StimDir;
+	int cnd_Target_Dist[36];
+	int cnd_Dimming[36];
+	float cnd_Direction[36];
+	int CndNum;
+	int CurrentStimcode;	
+	//Screens
+	
+	int TargetScreen,Dist1Screen,Dist2Screen,CueTestScreen;
+	int RFInTestScreen,RFOut1TestScreen,RFOut2TestScreen,CueInTestScreen,CueOut1TestScreen,CueOut2TestScreen;
+	int BackgroundScreen;
+	
+	
+	//Colors
+	int RGB_Red_RF_In,RGB_Green_RF_In,RGB_Blue_RF_In;
+	int RGB_Red_RF_Out_1,RGB_Green_RF_Out_1,RGB_Blue_RF_Out_1; 
+	int RGB_Red_RF_Out_2,RGB_Green_RF_Out_2,RGB_Blue_RF_Out_2;
+	int GREYVALUE;
+	int RGB_Red_RF_In_Dimmed,RGB_Green_RF_In_Dimmed,RGB_Blue_RF_In_Dimmed;
+	int RGB_Red_RF_Out_1_Dimmed,RGB_Green_RF_Out_1_Dimmed,RGB_Blue_RF_Out_1_Dimmed; 
+	int RGB_Red_RF_Out_2_Dimmed,RGB_Green_RF_Out_2_Dimmed,RGB_Blue_RF_Out_2_Dimmed;
+	
+	int RED_TARGET,GREEN_TARGET,BLUE_TARGET;
+	int RED_TARGET_DIMMED,GREEN_TARGET_DIMMED,BLUE_TARGET_DIMMED;
+	int RED_DIST1,GREEN_DIST1,BLUE_DIST1;
+	int RED_DIST1_DIMMED,GREEN_DIST1_DIMMED,BLUE_DIST1_DIMMED;
+	int RED_DIST2,GREEN_DIST2,BLUE_DIST2;
+	int RED_DIST2_DIMMED,GREEN_DIST2_DIMMED,BLUE_DIST2_DIMMED;  	
+	
+	int RF_IN,RF_OUT_1,RF_OUT_2,RGB_Red[3], RGB_Green[3], RGB_Blue[3],RGB_Red_Dimmed[03],RGB_Green_Dimmed[3],RGB_Blue_Dimmed[3];
+    pchar colors ;                                             
+	int TARGET_LUTIndex,DIST1_LUTIndex,DIST2_LUTIndex;
+
+
+	
+	ActualTrialNum++;
+	
+	
+//Mprintf(5,"VorAllemCS[1]:%1.2f AS[1]%1.2f CNS[1]%1.2f ANS[1]%1.2f",CorrStimTrials[1],AllStimTrials[1],CorrNStimTrials[1],AllNStimTrials[1]);	
+
+	
+	//----------------------------------------------------
+	// initialise neuralynx receive
+	//Config_SETUP1();
+	SendByteA_plus(0,5);
+	encode(START_PRE_TRIAL);
+	SendByteA_plus(NLX_TRIAL_START,5);
+	//---- Drug Condition
+	CurrentBlock = BLOCKget_block_num();
+	DrugFlag=0;
+	Pause = 0;
+	esc_flag = 0;
+
+	if ((NewStartMarker==0)|| (PreBlockNum != CurrentBlock)||(TrialCounter==0))
+	{
+		if ((CurrentBlock==1)||(CurrentBlock ==3))
+		{
+		TrialCounter=36;
+		}
+		else
+		{	
+		TrialCounter=36;	
+		}
+	}
+NewStartMarker =1;
+	
+	
+	
+        Mprintf(5,"%d Trials to go in this Block",TrialCounter);
+		
+	PreBlockNum = CurrentBlock;
+	if ((CurrentBlock ==2)||(CurrentBlock ==4)) 
+	{
+	DrugFlag =1;
+	SendByteB(2);
+	Mprintf(4,"DRUGBLOCK");
+	}
+	else
+	{
+	SendByteB(0);
+	Mprintf(4,"NO DRUGS");
+	}
+	//----------------------------------------------------
+	// initialise response flags
+	missed_flag = 0;
+	early_flag = 0;
+	error_flag = 0;
+	correct_flag = 0;
+	terminate_flag = 0;
+	readdata_flag = 1;
+	eye_error=0;
+	MicroStimulationFlag =0;
+	NewFileFlag=0;
+	// currArrayValue=0;
+	// EndOfFileFlag=0;
+
+	//----------------------------------------------------
+	// BLOCK info
+
+
+RFInTestScreen = TEST3;
+RFOut1TestScreen = TEST4;
+RFOut2TestScreen = TEST5;
+CueInTestScreen = TEST0;
+CueOut1TestScreen = TEST1;
+CueOut2TestScreen = TEST2;
+BackgroundScreen = TEST15;
+
+
+		//----------------------------------------------------
+	// BLOCK info
+	CndNum = 36;
+	CurrentCondition = BLOCKget_cond_num();
+	CurrentTrial = get_trial_num();
+	CurrentStimcode = CndNum*(CurrentBlock-1)+CurrentCondition;
+
+	//----------------------------------------------------
+	
+
+
+
+
+// read param file
+	X_F = readPARAM(RF_PARAM_FILE,"FIX_x");// screen centred coordinates
+	Y_F = readPARAM(RF_PARAM_FILE,"FIX_y");// screen centred coordinates
+	X_RF = readPARAM(RF_PARAM_FILE,"RF_x");// eye centred coordinates
+	Y_RF = readPARAM(RF_PARAM_FILE,"RF_y");// eye centred coordinates
+	X_OUT_1 = readPARAM(RF_PARAM_FILE,"OUT_1_x");// eye centred coordinates
+	Y_OUT_1 = readPARAM(RF_PARAM_FILE,"OUT_1_y");// eye centred coordinates
+	X_OUT_2 = readPARAM(RF_PARAM_FILE,"OUT_2_x");// eye centred coordinates
+	Y_OUT_2 = readPARAM(RF_PARAM_FILE,"OUT_2_y");// eye centred coordinates
+	Individual_Placement= readPARAM(RF_PARAM_FILE,"Individual_Placement");// Controls the automatic 120 degree spaced placement
+	
+
+MICROSTIM = readPARAM(RF_PARAM_FILE,"MICROSTIM");// Controls whether MICROSTIMULATION is activated or not;
+
+
+
+	Cue_RadEcc = readPARAM(RF_PARAM_FILE,"CUE_RADECC");
+	Cue_Ecc=readPARAM(RF_PARAM_FILE,"CUE_ECC");
+
+
+
+
+
+
+RF_IN = readPARAM(RF_PARAM_FILE,"RF_IN");// ColorCode of the Stimulus inside RF
+RF_OUT_1 = readPARAM(RF_PARAM_FILE,"RF_OUT_1");// ColorCode of the Stimulus on RF_OUT Position 1
+RF_OUT_2 =readPARAM(RF_PARAM_FILE,"RF_OUT_2");// ColorCode of the Stimulus on RF_OUT Position 1
+
+
+RGB_Red[0] = readPARAM(RF_PARAM_FILE,"RGB_Red_1");// Red value of the Stimulus inside the receptive field non dimmed
+RGB_Green[0] = readPARAM(RF_PARAM_FILE,"RGB_Green_1");// Green value of the Stimulus inside the receptive field non dimmed
+RGB_Blue[0] = readPARAM(RF_PARAM_FILE,"RGB_Blue_1");// Blue value of the Stimulus inside the receptive field non dimmed
+
+RGB_Red[1] = readPARAM(RF_PARAM_FILE,"RGB_Red_2");// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green[1] = readPARAM(RF_PARAM_FILE,"RGB_Green_2");// Green value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Blue[1] = readPARAM(RF_PARAM_FILE,"RGB_Blue_2");// Blue value of the Stimulus 1 outside the receptive field non dimmed
+
+
+RGB_Red[2] = readPARAM(RF_PARAM_FILE,"RGB_Red_3");// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green[2] = readPARAM(RF_PARAM_FILE,"RGB_Green_3");// Green value of the Stimulus 2 outside the receptive field non dimmed
+RGB_Blue[2]= readPARAM(RF_PARAM_FILE,"RGB_Blue_3");// Blue value of the Stimulus 2 outside the receptive field non dimmed
+
+
+
+RGB_Red_Dimmed[0]   = readPARAM(RF_PARAM_FILE,"RGB_Red_1_Dimmed");// Red value of the Stimulus inside the receptive field non dimmed
+RGB_Green_Dimmed[0] = readPARAM(RF_PARAM_FILE,"RGB_Green_1_Dimmed");// Green value of the Stimulus inside the receptive field non dimmed
+RGB_Blue_Dimmed[0]  = readPARAM(RF_PARAM_FILE,"RGB_Blue_1_Dimmed");// Blue value of the Stimulus inside the receptive field non dimmed
+
+
+RGB_Red_Dimmed[1]   = readPARAM(RF_PARAM_FILE,"RGB_Red_2_Dimmed");// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_Dimmed[1] = readPARAM(RF_PARAM_FILE,"RGB_Green_2_Dimmed");// Green value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Blue_Dimmed[1]  = readPARAM(RF_PARAM_FILE,"RGB_Blue_2_Dimmed");// Blue value of the Stimulus 1 outside the receptive field non dimmed
+
+
+RGB_Red_Dimmed[2]   = readPARAM(RF_PARAM_FILE,"RGB_Red_3_Dimmed");// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_Dimmed[2] = readPARAM(RF_PARAM_FILE,"RGB_Green_3_Dimmed");// Green value of the Stimulus 2 outside the receptive field non dimmed
+RGB_Blue_Dimmed[2]  = readPARAM(RF_PARAM_FILE,"RGB_Blue_3_Dimmed");// Blue value of the Stimulus 2 outside the receptive field non dimmed
+ 
+GREYVALUE =  readPARAM(RF_PARAM_FILE,"GREYVALUE"); // RGB Value for the Grey bars
+	
+
+PositionCondition = readPARAM(RF_PARAM_FILE,"PositionCondition"); // Defines the rotation of position 1-6
+
+
+
+
+
+RGB_Red_RF_In =   RGB_Red[RF_IN-1] ;		// Red value of the Stimulus inside the receptive field non dimmed
+RGB_Green_RF_In = RGB_Green[RF_IN-1]; 		// Green value of the Stimulus inside the receptive field non dimmed
+RGB_Blue_RF_In =  RGB_Blue[RF_IN-1] ; 		// Blue value of the Stimulus inside the receptive field non dimmed
+
+
+RGB_Red_RF_Out_1 = 	RGB_Red[RF_OUT_1-1];	// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_RF_Out_1 = 	RGB_Green[RF_OUT_1-1];	// Green value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Blue_RF_Out_1 = 	RGB_Blue[RF_OUT_1-1];	// Blue value of the Stimulus 1 outside the receptive field non dimmed
+
+
+RGB_Red_RF_Out_2 = 	RGB_Red[RF_OUT_2-1] ;	// Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_RF_Out_2 = 	RGB_Green[RF_OUT_2-1];	// Green value of the Stimulus 2 outside the receptive field non dimmed
+RGB_Blue_RF_Out_2=  	RGB_Blue[RF_OUT_2-1];	//Blue value of the Stimulus 2 outside the receptive field non dimmed
+	
+
+
+RGB_Red_RF_In_Dimmed = 	RGB_Red_Dimmed[RF_IN-1];  	//Red value of the Stimulus inside the receptive field non dimmed
+RGB_Green_RF_In_Dimmed 	= RGB_Green_Dimmed[RF_IN-1];	// Green value of the Stimulus inside the receptive field non dimmed
+RGB_Blue_RF_In_Dimmed =	RGB_Blue_Dimmed[RF_IN-1] ;	// Blue value of the Stimulus inside the receptive field non dimmed
+
+
+RGB_Red_RF_Out_1_Dimmed = 	RGB_Red_Dimmed[RF_OUT_1-1];  //Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_RF_Out_1_Dimmed =	RGB_Green_Dimmed[RF_OUT_1-1];// Green value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Blue_RF_Out_1_Dimmed =	RGB_Blue_Dimmed[RF_OUT_1-1]; // Blue value of the Stimulus 1 outside the receptive field non dimmed
+
+
+RGB_Red_RF_Out_2_Dimmed = RGB_Red_Dimmed[RF_OUT_2-1] ;	//Red value of the Stimulus 1 outside the receptive field non dimmed
+RGB_Green_RF_Out_2_Dimmed = RGB_Green_Dimmed[RF_OUT_2-1];	// Green value of the Stimulus 2 outside the receptive field non dimmed
+RGB_Blue_RF_Out_2_Dimmed= RGB_Blue_Dimmed[RF_OUT_2-1]; 	//Blue value of the Stimulus 2 outside the receptive field non dimmed
+
+
+
+
+
+
+
+
+
+//---------------------------------------
+//Condition definition
+
+/// Target Distractor Definition
+		
+	cnd_Target_Dist[0]=0;
+	cnd_Target_Dist[1]=0;
+	cnd_Target_Dist[2]=0;
+	cnd_Target_Dist[3]=0;
+	cnd_Target_Dist[4]=0;
+	cnd_Target_Dist[5]=0;
+	//cnd_Target_Dist[6]=0;
+
+	cnd_Target_Dist[6]=1;
+	cnd_Target_Dist[7]=1;
+	cnd_Target_Dist[8]=1;
+	cnd_Target_Dist[9]=1;
+	cnd_Target_Dist[10]=1;
+	cnd_Target_Dist[11]=1;
+	
+
+	cnd_Target_Dist[12]=2;
+	cnd_Target_Dist[13]=2;
+	cnd_Target_Dist[14]=2;
+	cnd_Target_Dist[15]=2;	
+	cnd_Target_Dist[16]=2;
+	cnd_Target_Dist[17]=2;
+	
+	
+	cnd_Target_Dist[18]=0;
+	cnd_Target_Dist[19]=0;
+	cnd_Target_Dist[20]=0;
+	cnd_Target_Dist[21]=0;
+	cnd_Target_Dist[22]=0;
+	cnd_Target_Dist[23]=0;
+	//cnd_Target_Dist[6]=0;
+
+	cnd_Target_Dist[24]=1;
+	cnd_Target_Dist[25]=1;
+	cnd_Target_Dist[26]=1;
+	cnd_Target_Dist[27]=1;
+	cnd_Target_Dist[28]=1;
+	cnd_Target_Dist[29]=1;
+	
+
+	cnd_Target_Dist[30]=2;
+	cnd_Target_Dist[31]=2;
+	cnd_Target_Dist[32]=2;
+	cnd_Target_Dist[33]=2;	
+	cnd_Target_Dist[34]=2;
+	cnd_Target_Dist[35]=2;
+
+	
+	
+		
+//-----------------------------------
+/// Dimming Order
+
+
+	cnd_Dimming[0]=0;
+	cnd_Dimming[1]=1;
+	cnd_Dimming[2]=2;
+	cnd_Dimming[3]=3;
+	cnd_Dimming[4]=4;
+	cnd_Dimming[5]=0;
+	
+	
+	cnd_Dimming[6]=0;	
+	cnd_Dimming[7]=1; 
+	cnd_Dimming[8]=2;
+	cnd_Dimming[9]=3;
+	cnd_Dimming[10]=4;
+	cnd_Dimming[11]=0;
+	
+ 
+	cnd_Dimming[12]=0;
+	cnd_Dimming[13]=1;
+	cnd_Dimming[14]=2;
+	cnd_Dimming[15]=3;
+	cnd_Dimming[16]=4;
+	cnd_Dimming[17]=0;
+	
+	
+		
+	cnd_Dimming[18]=0;
+	cnd_Dimming[19]=1;
+	cnd_Dimming[20]=2;
+	cnd_Dimming[21]=3;
+	cnd_Dimming[22]=4;
+	cnd_Dimming[23]=0;
+	
+	
+	cnd_Dimming[24]=0;	
+	cnd_Dimming[25]=1; 
+	cnd_Dimming[26]=2;
+	cnd_Dimming[27]=3;
+	cnd_Dimming[28]=4;
+	cnd_Dimming[29]=0;
+	
+
+	cnd_Dimming[30]=0;
+	cnd_Dimming[31]=1;
+	cnd_Dimming[32]=2;
+	cnd_Dimming[33]=3;
+	cnd_Dimming[34]=4;
+	cnd_Dimming[35]=0;
+	
+//---------------------------------------
+// Movement direction
+
+cnd_Direction[0] =1;
+cnd_Direction[1]=1;
+cnd_Direction[2]=1;
+cnd_Direction[3]=1;
+cnd_Direction[4]=1;
+cnd_Direction[5]=1;
+cnd_Direction[6]=1;
+cnd_Direction[7]=1;
+cnd_Direction[8]=1;
+cnd_Direction[9]=1;
+cnd_Direction[10]=1;
+cnd_Direction[11]=1;
+cnd_Direction[12]=1;
+cnd_Direction[13]=1;
+cnd_Direction[14]=1;
+cnd_Direction[15]=1;
+cnd_Direction[16]=1;
+cnd_Direction[17]=1;
+cnd_Direction[18]=-1;
+cnd_Direction[19]=-1;
+cnd_Direction[20]=-1;
+cnd_Direction[21]=-1;
+cnd_Direction[22]=-1;
+cnd_Direction[23]=-1;
+cnd_Direction[24]=-1;
+cnd_Direction[25]=-1;
+cnd_Direction[26]=-1;
+cnd_Direction[27]=-1;
+cnd_Direction[28]=-1;
+cnd_Direction[29]=-1;
+cnd_Direction[30]=-1;
+cnd_Direction[31]=-1;
+cnd_Direction[32]=-1;
+cnd_Direction[33]=-1;
+cnd_Direction[34]=-1;
+cnd_Direction[35]=-1;
+	
+
+
+	//----------------------------------------------------
+	// Random Times
+	PreCueTime= random(PRE_CUE_TIME_MIN,PRE_CUE_TIME_MAX+1);
+	PreFirstDimTime= random(PRE_FIRST_DIM_TIME_MIN,PRE_FIRST_DIM_TIME_MAX +1);
+	PreMicroStimTime = random (PRE_MICROSTIM_TIME_MIN,PRE_MICROSTIM_TIME_MAX+1);
+	PreSeconDimTime= random(PRE_SECON_DIM_TIME_MIN,PRE_SECON_DIM_TIME_MAX +1);
+	PreThirdDimTime= random(PRE_SECON_DIM_TIME_MIN,PRE_SECON_DIM_TIME_MAX +1);
+
+// ---------------------------------------
+
+	
+//	Mprintf(4,"Allocation");
+		
+	
+	for (i=0;i<=35;i++)
+	{
+	
+		AllStimTrials[i]=0.0;
+		CorrNStimTrials[i]=0.0;
+		AllNStimTrials[i]=0.0;
+		MStimPerformance[i]=0.0;
+		Performance[i]=0.0; 
+		MStimProb[i]=0.0;
+		PerformanceRatio=1.0;	
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// PerformanceNew = (pchar) calloc ((3), sizeof(pint));
+	// PerformanceOld = (pchar) calloc ((3), sizeof(pint));
+	// if ((PerformanceNew==0) || (PerformanceOld ==0))
+	// { Mprintf(4,"Error memory allocation");}
+
+
+if (MICROSTIM ==1)
+{	
+	if ((NewFileFlag ==1) && (ActualTrialNum==1))
+	{
+		fpOld = fopen ( PERFORMANCE_OLD_FILE_NAME , "wb" );
+		//fpNew =fopen(PERFORMANCE_NEW_FILE_NAME , "wb" );
+		
+		for (i=0;i<(NumberOfTrials);i++)
+		{
+			Help =((int)random(1,37));
+			t=fwrite (&Help,sizeof(pint),1,fpOld );
+		//	p=fwrite (&Help,sizeof(pint),1,fpNew );
+			Help =((int)random(1,3)-1);
+			t=fwrite (&Help,sizeof(pint),1,fpOld );
+		//	p=fwrite (&Help,sizeof(pint),1,fpNew );
+			Help =((int)random(1,3)-1);
+			t=fwrite (&Help,sizeof(pint),1,fpOld );
+		//	p=fwrite (&Help,sizeof(pint),1,fpNew );
+				
+		}
+		
+		fclose(fpOld);
+
+	}
+
+
+	
+	
+	
+
+	
+	
+	fpOld = fopen ( PERFORMANCE_OLD_FILE_NAME , "rb" );
+	fpNew =fopen(PERFORMANCE_NEW_FILE_NAME , "wb" );
+	fseek(fpOld,(3*sizeof(pint)),SEEK_SET);
+
+
+	for (i=0;i< (NumberOfTrials-1);i++)
+	{
+		
+		if (i<= 500)
+			{ WeightingFactor =1.0;}
+		else if ((i >500)&&(i<= 800))
+			{ WeightingFactor = 2.0;}
+		else if ((i >800)&&(i <=900))
+			{ WeightingFactor =4.0;}
+		else if ((i >900)&&(i<=950))
+			{ WeightingFactor=6.0;}
+		else if (i>950)
+			{ WeightingFactor=8.0;}
+	
+		k=fread(&PerformanceOld,sizeof(pint),1,fpOld);
+		Condition = PerformanceOld;
+		p=fwrite(&PerformanceOld, sizeof(pint),1,fpNew);
+		
+		k=fread(&PerformanceOld,sizeof(pint),1,fpOld);
+				MicroStimMarker = PerformanceOld;
+		p=fwrite(&PerformanceOld, sizeof(pint),1,fpNew);
+		
+		k=fread(&PerformanceOld,sizeof(pint),1,fpOld);
+						CorrectMarker = PerformanceOld;
+		p=fwrite(&PerformanceOld, sizeof(pint),1,fpNew);
+		
+		
+		if (MicroStimMarker ==1)
+		{
+			Helper=AllStimTrials[Condition-1]+ WeightingFactor;
+			AllStimTrials[Condition-1]=Helper;
+			if (CorrectMarker==1)
+			{
+				Helper=CorrStimTrials[Condition-1]+ WeightingFactor;
+				CorrStimTrials[Condition-1]=Helper;
+			}
+		}
+		else if (MicroStimMarker ==0)
+		{
+			Helper=AllNStimTrials[Condition-1]+ WeightingFactor;
+			AllNStimTrials[Condition-1]=Helper;
+			if (CorrectMarker==1)
+			{
+				Helper=CorrNStimTrials[Condition-1]+ WeightingFactor;
+				CorrNStimTrials[Condition-1]=Helper;
+			}
+		}
+	}
+	fclose(fpNew);
+	fclose(fpOld);
+		
+	
+	
+Mprintf(4,"CS[1]:%1.2f AS[1]%1.2f CNS[1]%1.2f ANS[1]%1.2f",CorrStimTrials[1],AllStimTrials[1],CorrNStimTrials[1],AllNStimTrials[1]);	
+
+	for (i=0;i<=35;i++)
+	{
+		if (AllStimTrials[i] >0)
+		{
+			MStimPerformance[i] =(CorrStimTrials[i] / AllStimTrials[i]);
+			Performance[i]= (CorrNStimTrials[i]/AllNStimTrials[i]);
+			PerformanceRatio = ((float)(Performance[i]/MStimPerformance[i]));
+			
+			
+			if (Performance[i]>MStimPerformance[i])
+			{
+			
+			PerformanceRatio = ((float)(MStimPerformance[i]/Performance[i]));
+				if (PerformanceRatio <=0.0)
+				{	
+				PerformanceRatio=1.0;
+				}
+			Helper2=((float)(log(PerformanceRatio)));
+			Helper1=((float)(Helper2/1.8));
+			MStimProb[i]=MICRO_STIMULATION_PROB+(0.15*(-Helper1));
+			
+			
+			}
+			else if (Performance[i]<MStimPerformance[i])
+			{
+			PerformanceRatio = ((float)(Performance[i]/MStimPerformance[i]));
+			if (PerformanceRatio <=0.0)
+			{	PerformanceRatio=1.0;}
+			Helper2=((float)(log(PerformanceRatio)));
+			Helper1=((float)(Helper2/1.8));
+			MStimProb[i]=MICRO_STIMULATION_PROB-(0.1*(-Helper1));
+						}
+			else if (Performance[i]==MStimPerformance[i])
+			{MStimProb[i]=MICRO_STIMULATION_PROB;}
+			
+			
+			
+		}
+	}
+	
+	Mprintf(5,"MPerf[%d]:%1.2f  Perf[%d]:%1.2f MStimProb[%d]:%1.2f",CurrentCondition,MStimPerformance[CurrentCondition],CurrentCondition,Performance[CurrentCondition],CurrentCondition,MStimProb[CurrentCondition]);	
+
+	
+
+	if (((float)random(1,101)) <= ((25)))
+	{
+	MicroStimulationFlag =1;
+	}
+}	
+	
+	
+
+	
+	// define first/second, left/right
+	FirstDimFrame = FRAMENUMPERCYCLE*(CYCLENUM-1)+1;
+	SeconDimFrame = FRAMENUMPERCYCLE*(CYCLENUM-1)+1;
+	ThirdDimFrame = FRAMENUMPERCYCLE*(CYCLENUM-1)+1;
+	CueDimFrame = 1;
+	CurrCueFrameNr = 1;
+	
+		//----------------------------------------------------
+	// calculate frame numbers
+	PreCueFrameNum = (int) (((float) PreCueTime)/1000.0 * (float) FRAMERATE);
+	PreFirstDimFrameNum = (int) (((float) PreFirstDimTime)/1000.0 * (float) FRAMERATE);
+	PreMicroStimFrameNum = (int) (((float) PreMicroStimTime)/1000.0 * (float) FRAMERATE);
+	PreSeconDimFrameNum = (int) (((float) PreSeconDimTime)/1000.0 * (float) FRAMERATE);
+	PreThirdDimFrameNum = (int) (((float) PreThirdDimTime)/1000.0 * (float) FRAMERATE);
+	ReactionMinFrameNum = (int) (((float) REACTION_TIME_MIN)/1000.0 * (float) FRAMERATE );
+	ReactionMaxFrameNum = (int) (((float) REACTION_TIME_MAX)/1000.0 * (float) FRAMERATE );
+	
+	
+	
+	
+	
+	//----------------------------------------------------
+	// Stimulus positions
+	
+	
+	if (Individual_Placement ==0)
+	{
+		Theta_RF = cart2theta(X_RF,Y_RF);
+		r = cart2r(X_RF,Y_RF);
+		Theta_Out_1 = Theta_RF-120;
+		Theta_Out_2 = Theta_RF-240;
+		if (Theta_Out_1< 0)
+		{
+		Theta_Out_1 = 360-((Theta_Out_1) * (-1));
+		}
+		if (Theta_Out_2< 0)
+		{ 
+		Theta_Out_2 = 360-((Theta_Out_2) *(-1));
+		}
+	
+		X_OUT_1 = polar2x(r,Theta_Out_1);
+		Y_OUT_1 = polar2y(r,Theta_Out_1);
+		X_OUT_2 = polar2x(r,Theta_Out_2);
+		Y_OUT_2 = polar2y(r,Theta_Out_2);
+	}
+	
+		X_RF_FINAL =X_RF + X_F;
+		Y_RF_FINAL = Y_RF + Y_F;
+		X_OUT_1_FINAL = X_OUT_1 + X_F;
+		Y_OUT_1_FINAL = Y_OUT_1 + Y_F;
+		X_OUT_2_FINAL = X_OUT_2 + X_F;
+		Y_OUT_2_FINAL = Y_OUT_2 + Y_F;
+	
+	
+
+
+	//--------------------------------------------------------
+	//Cue Positions
+	
+	CueX_RF = X_F + polar2x(Cue_Ecc,cart2theta(X_RF,Y_RF));
+        CueY_RF = Y_F + polar2y(Cue_Ecc,cart2theta(X_RF,Y_RF));
+                		
+	CueX_OUT_1 = X_F + polar2x(Cue_Ecc,cart2theta(X_OUT_1,Y_OUT_1));
+        CueY_OUT_1= Y_F + polar2y(Cue_Ecc,cart2theta(X_OUT_1,Y_OUT_1));
+               
+   	CueX_OUT_2 = X_F + polar2x(Cue_Ecc,cart2theta(X_OUT_2,Y_OUT_2));
+	CueY_OUT_2= Y_F + polar2y(Cue_Ecc,cart2theta(X_OUT_2,Y_OUT_2));
+	               
+	   
+	
+
+	
+	//------------------------------------------------------
+	// Setting of undimmed colors
+		GcolorABS(RFIn_LUTIndex,RGB_Red_RF_In,RGB_Green_RF_In,RGB_Blue_RF_In); 
+		GcolorABS(RFOut1_LUTIndex,RGB_Red_RF_Out_1,RGB_Green_RF_Out_1,RGB_Blue_RF_Out_1); 
+		GcolorABS(RFOut2_LUTIndex,RGB_Red_RF_Out_2,RGB_Green_RF_Out_2,RGB_Blue_RF_Out_2); 
+		GcolorABS(RFIn_Grey_LUTIndex,GREYVALUE,GREYVALUE,GREYVALUE);
+		GcolorABS(RFOut1_Grey_LUTIndex,GREYVALUE,GREYVALUE,GREYVALUE);
+		GcolorABS(RFOut2_Grey_LUTIndex,GREYVALUE,GREYVALUE,GREYVALUE);
+		Gflush(1);
+
+	//-----------------------------------------------------------
+	//Definition of Test, Distractor1 and Distractor2 and respective Cue
+	
+	
+	if (cnd_Target_Dist[CurrentCondition-1]==0)
+		{	
+			
+			TargetScreen  = RFInTestScreen;
+			Dist1Screen   = RFOut1TestScreen;
+			Dist2Screen   = RFOut2TestScreen;
+			CueTestScreen = CueInTestScreen;
+			TargetX = X_RF_FINAL;
+			TargetY = Y_RF_FINAL;
+			Dist1X  = X_OUT_1_FINAL;
+			Dist1Y  = Y_OUT_1_FINAL;
+			Dist2X  = X_OUT_2_FINAL;
+			Dist2Y  = Y_OUT_2_FINAL;
+			CueX  = CueX_RF;
+			CueY  = CueY_RF;
+			
+			
+			RED_TARGET   = RGB_Red_RF_In;
+			GREEN_TARGET = RGB_Green_RF_In;
+			BLUE_TARGET  = RGB_Blue_RF_In; 
+			RED_TARGET_DIMMED   = RGB_Red_RF_In_Dimmed;
+			GREEN_TARGET_DIMMED = RGB_Green_RF_In_Dimmed;
+			BLUE_TARGET_DIMMED  = RGB_Blue_RF_In_Dimmed;
+			
+			
+			RED_DIST1   = RGB_Red_RF_Out_1;
+			GREEN_DIST1 = RGB_Green_RF_Out_1;
+			BLUE_DIST1  = RGB_Blue_RF_Out_1; 
+			RED_DIST1_DIMMED   = RGB_Red_RF_Out_1_Dimmed;
+			GREEN_DIST1_DIMMED = RGB_Green_RF_Out_1_Dimmed;
+			BLUE_DIST1_DIMMED  = RGB_Blue_RF_Out_1_Dimmed; 
+			
+			
+			RED_DIST2   = RGB_Red_RF_Out_2;
+			GREEN_DIST2 = RGB_Green_RF_Out_2;
+			BLUE_DIST2  = RGB_Blue_RF_Out_2; 
+			RED_DIST2_DIMMED   = RGB_Red_RF_Out_2_Dimmed;
+			GREEN_DIST2_DIMMED = RGB_Green_RF_Out_2_Dimmed;
+			BLUE_DIST2_DIMMED  = RGB_Blue_RF_Out_2_Dimmed;                		
+
+		
+			TARGET_LUTIndex = RFIn_LUTIndex;
+			DIST1_LUTIndex  = RFOut1_LUTIndex;
+			DIST2_LUTIndex  = RFOut2_LUTIndex;	
+		}
+
+	else if (cnd_Target_Dist[CurrentCondition-1]==1)
+		{	
+			TargetScreen = RFOut1TestScreen;
+			Dist1Screen = RFInTestScreen;
+			Dist2Screen = RFOut2TestScreen;
+			CueTestScreen = CueOut1TestScreen;
+			TargetX = X_OUT_1_FINAL;
+			TargetY = Y_OUT_1_FINAL;
+			Dist1X = X_RF_FINAL;
+			Dist1Y = Y_RF_FINAL;
+			Dist2X = X_OUT_2_FINAL;
+			Dist2Y = Y_OUT_2_FINAL;
+			
+			CueX  = CueX_OUT_1;
+			CueY = CueY_OUT_1;			
+			
+
+			RED_TARGET   = RGB_Red_RF_Out_1;
+			GREEN_TARGET = RGB_Green_RF_Out_1;
+			BLUE_TARGET  = RGB_Blue_RF_Out_1;
+			RED_TARGET_DIMMED   = RGB_Red_RF_Out_1_Dimmed;
+			GREEN_TARGET_DIMMED = RGB_Green_RF_Out_1_Dimmed;
+			BLUE_TARGET_DIMMED  = RGB_Blue_RF_Out_1_Dimmed;
+			
+			
+			RED_DIST1   = RGB_Red_RF_In;
+			GREEN_DIST1 = RGB_Green_RF_In;
+			BLUE_DIST1  = RGB_Blue_RF_In; 
+			RED_DIST1_DIMMED   = RGB_Red_RF_In_Dimmed;
+			GREEN_DIST1_DIMMED = RGB_Green_RF_In_Dimmed;
+			BLUE_DIST1_DIMMED  = RGB_Blue_RF_In_Dimmed; 
+			
+			
+			RED_DIST2   = RGB_Red_RF_Out_2;
+			GREEN_DIST2 = RGB_Green_RF_Out_2;
+			BLUE_DIST2  = RGB_Blue_RF_Out_2; 
+			RED_DIST2_DIMMED   = RGB_Red_RF_Out_2_Dimmed;
+			GREEN_DIST2_DIMMED = RGB_Green_RF_Out_2_Dimmed;
+			BLUE_DIST2_DIMMED  = RGB_Blue_RF_Out_2_Dimmed; 		
+			
+
+
+			TARGET_LUTIndex = RFOut1_LUTIndex;
+			DIST1_LUTIndex  = RFIn_LUTIndex;
+			DIST2_LUTIndex  = RFOut2_LUTIndex;
+					
+		}
+
+	else if (cnd_Target_Dist[CurrentCondition-1]==2)
+		{	
+				
+			TargetScreen = RFOut2TestScreen;
+			Dist1Screen = RFInTestScreen;
+			Dist2Screen = RFOut1TestScreen;
+			CueTestScreen = CueOut2TestScreen;
+			TargetX = X_OUT_2_FINAL;
+			TargetY = Y_OUT_2_FINAL;
+			Dist1X = X_RF_FINAL;
+			Dist1Y = Y_RF_FINAL;
+			Dist2X = X_OUT_1_FINAL;
+			Dist2Y = Y_OUT_1_FINAL	;					
+		
+		
+			CueX  = CueX_OUT_2;
+			CueY = CueY_OUT_2;		
+			
+			RED_TARGET   = RGB_Red_RF_Out_2;
+			GREEN_TARGET = RGB_Green_RF_Out_2;
+			BLUE_TARGET  = RGB_Blue_RF_Out_2; 
+			RED_TARGET_DIMMED   = RGB_Red_RF_Out_2_Dimmed;
+			GREEN_TARGET_DIMMED = RGB_Green_RF_Out_2_Dimmed;
+			BLUE_TARGET_DIMMED  = RGB_Blue_RF_Out_2_Dimmed; 			
+			
+			
+			
+			RED_DIST1   = RGB_Red_RF_In;
+			GREEN_DIST1 = RGB_Green_RF_In;
+			BLUE_DIST1  = RGB_Blue_RF_In; 
+			RED_DIST1_DIMMED   = RGB_Red_RF_In_Dimmed;
+			GREEN_DIST1_DIMMED = RGB_Green_RF_In_Dimmed;
+			BLUE_DIST1_DIMMED  = RGB_Blue_RF_In_Dimmed; 
+		
+
+			RED_DIST2   = RGB_Red_RF_Out_1;
+			GREEN_DIST2 = RGB_Green_RF_Out_1;
+			BLUE_DIST2  = RGB_Blue_RF_Out_1;
+			RED_DIST2_DIMMED   = RGB_Red_RF_Out_1_Dimmed;
+			GREEN_DIST2_DIMMED = RGB_Green_RF_Out_1_Dimmed;
+			BLUE_DIST2_DIMMED  = RGB_Blue_RF_Out_1_Dimmed;
+		
+
+			TARGET_LUTIndex = RFOut2_LUTIndex;
+			DIST1_LUTIndex  = RFIn_LUTIndex;
+			DIST2_LUTIndex  = RFOut1_LUTIndex;
+
+		}
+
+	
+
+	
+	
+	
+
+	//----------------------------------------------------
+	// Order of dimming
+	if (cnd_Dimming[CurrentCondition-1]==0)
+	{	
+		TargetFirstFlag = 1;
+		Dist1FirstFlag =  0;
+		Dist2FirstFlag =  0;
+		
+		TargetSeconFlag = 0; 
+		Dist1SeconFlag =  1;
+		Dist2SeconFlag =  0;
+		 
+		TargetThirdFlag = 0; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  1;
+		
+		}
+	else if (cnd_Dimming[CurrentCondition-1]==1)
+	{	
+		TargetFirstFlag=  0;
+		Dist1FirstFlag =  1;
+		Dist2FirstFlag =  0;
+		
+		TargetSeconFlag = 1; 
+		Dist1SeconFlag =  0;
+		Dist2SeconFlag =  0;
+		 
+		TargetThirdFlag = 0; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  0;
+	}
+	else if (cnd_Dimming[CurrentCondition-1]==2)
+	{	
+		TargetFirstFlag=  0;
+		Dist1FirstFlag =  0;
+		Dist2FirstFlag =  1;
+		
+		TargetSeconFlag = 1; 
+		Dist1SeconFlag =  0;
+		Dist2SeconFlag =  0;
+		 
+		TargetThirdFlag = 0; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  0;
+	}
+	else if (cnd_Dimming[CurrentCondition-1]==3)
+	{	
+		TargetFirstFlag=  0;
+		Dist1FirstFlag =  1;
+		Dist2FirstFlag =  0;
+		
+		TargetSeconFlag = 0; 
+		Dist1SeconFlag =  0;
+		Dist2SeconFlag =  1;
+		 
+		TargetThirdFlag = 1; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  0;
+	}
+	else if (cnd_Dimming[CurrentCondition-1]==4)
+	{	
+		TargetFirstFlag=  0;
+		Dist1FirstFlag =  0;
+		Dist2FirstFlag =  1;
+		
+		TargetSeconFlag = 0; 
+		Dist1SeconFlag =  1;
+		Dist2SeconFlag =  0;
+		 
+		TargetThirdFlag = 1; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  0;
+	}	
+	
+	else if (cnd_Dimming[CurrentCondition-1]==5)
+	{	
+		TargetFirstFlag=  0;
+		Dist1FirstFlag =  0;
+		Dist2FirstFlag =  1;
+		
+		TargetSeconFlag = 0; 
+		Dist1SeconFlag =  1;
+		Dist2SeconFlag =  0;
+		 
+		TargetThirdFlag = 1; 
+		Dist1ThirdFlag =  0; 
+		Dist2ThirdFlag =  0;
+	}	
+	
+	
+	
+	//----------------------------------------------
+	// Movment Direction
+	
+	StimDir = cnd_Direction[CurrentCondition-1];
+		
+	
+	
+	//----------------------------------------------------
+	// set graphics
+		
+	Gmovie_step(RFInTestScreen,0,MOVIE_FIRST_FRAME);
+	Gmovie_step(RFOut1TestScreen,0,MOVIE_FIRST_FRAME);
+	Gmovie_step(RFOut2TestScreen,0,MOVIE_FIRST_FRAME);
+	
+	GmoveABS(RFInTestScreen,X_RF_FINAL,Y_RF_FINAL);
+	GmoveABS(RFOut1TestScreen,X_OUT_1_FINAL,Y_OUT_1_FINAL);
+	GmoveABS(RFOut2TestScreen,X_OUT_2_FINAL,Y_OUT_2_FINAL);
+	GmoveABS(CueTestScreen,CueX,CueY);
+	
+	GmoveABS(FIXSPOT,X_F,Y_F);
+	
+	Gon_off(TargetScreen, OFF);
+	Gon_off(Dist1Screen, OFF);
+	Gon_off(Dist2Screen, OFF);
+	Gon_off(CueTestScreen, OFF);
+	Gon_off(FIXSPOT, OFF);
+	Gflush(1);
+    clear_eog();
+
+
+	
+	
+
+	
+	
+	
+	//----------------------------------------------------
+	// Reward parameter
+	
+	set_expected_response (BAR_RELEASE_ON_TEST);
+	GetRewNum_Pascoe_Gratc(&rewpulse_num);
+	rewpulse_time = 0;
+
+
+	//----------------------------------------------------
+	
+	Mprintf(1,"Tr#%d Hits: %d Rew: %d @%dHz nextRew: %dx%d",CurrentTrial,NumHits,NumRew,FRAMERATE,rewpulse_num,rewpulse_time);
+	
+	
+	if (TargetFirstFlag==1)
+	 { Mprintf(2,"Target(%2.1f,%2.1f) RF(%2.1f,%2.1f)  FIRST MStim %d",TargetX,TargetY,X_RF_FINAL,Y_RF_FINAL,MicroStimulationFlag); }
+	else if (TargetSeconFlag==1)	
+	 { Mprintf(2,"Target(%2.1f,%2.1f) RF(%2.1f,%2.1f)  SECOND MStim %d",TargetX,TargetY,X_RF_FINAL,Y_RF_FINAL,MicroStimulationFlag); }
+	else if (TargetThirdFlag==1)			
+	 { Mprintf(2,"Target(%2.1f,%2.1f) RF(%2.1f,%2.1f)  THIRD MStim %d",TargetX,TargetY,X_RF_FINAL,Y_RF_FINAL,MicroStimulationFlag); }
+	
+		//----------------------------------------------------
+	// send trial parameter
+	encode(TRIALPARAM_START);
+	encode(PARAMBASE+ (int) (X_F*100)); // Position Fixpoint
+	encode(PARAMBASE+ (int) (Y_F*100)); // Position Fixpoint
+	
+	encode(PARAMBASE+ (int) (X_RF_FINAL*100)); //Position receptive field
+	encode(PARAMBASE+ (int) (Y_RF_FINAL*100)); //Position receptive field
+	encode(PARAMBASE+ (int) (X_OUT_1_FINAL*100)); //Position Outside receptive field 1
+	encode(PARAMBASE+ (int) (Y_OUT_1_FINAL*100)); //Position Outside receptive field 1
+	encode(PARAMBASE+ (int) (X_OUT_2_FINAL*100)); //Position Outside receptive field 2
+	encode(PARAMBASE+ (int) (Y_OUT_2_FINAL*100)); //Position Outside receptive field 2
+	encode(PARAMBASE+ (int) (TargetX*100)); // Position Target
+	encode(PARAMBASE+ (int) (TargetY*100)); // Position Target
+	encode(PARAMBASE+ (int) (Dist1X*100)); // Position Distractor1
+	encode(PARAMBASE+ (int) (Dist1Y*100)); // Position Distractor1
+	encode(PARAMBASE+ (int) (Dist2X*100)); // Position Distractor2
+	encode(PARAMBASE+ (int) (Dist2Y*100)); // Position Distractor2
+	encode(PARAMBASE+ (int) (CueX*100)); // Position Cue
+	encode(PARAMBASE+ (int) (CueY*100)); // Position Cue
+	
+	
+	encode(PARAMBASE+ TargetFirstFlag); // Order of Dimming
+	encode(PARAMBASE+ TargetSeconFlag); // Order of Dimming
+	encode(PARAMBASE+ TargetThirdFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist1FirstFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist1SeconFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist1ThirdFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist2FirstFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist2SeconFlag); // Order of Dimming
+	encode(PARAMBASE+ Dist2ThirdFlag); // Order of Dimming
+	encode(PARAMBASE+ StimDir); // Stimulus drifting direction
+	encode(PARAMBASE+ RGB_Red_RF_In); // RGB Values for the three stimuli
+	encode(PARAMBASE+ RGB_Green_RF_In);
+	encode(PARAMBASE+ RGB_Blue_RF_In); 
+	encode(PARAMBASE+ RGB_Red_RF_In_Dimmed);
+	encode(PARAMBASE+ RGB_Green_RF_In_Dimmed);
+	encode(PARAMBASE+ RGB_Blue_RF_In_Dimmed);
+	encode(PARAMBASE+ RGB_Red_RF_Out_1);
+	encode(PARAMBASE+ RGB_Green_RF_Out_1);
+	encode(PARAMBASE+ RGB_Blue_RF_Out_1); 
+	encode(PARAMBASE+ RGB_Red_RF_Out_1_Dimmed);
+	encode(PARAMBASE+ RGB_Green_RF_Out_1_Dimmed);
+	encode(PARAMBASE+ RGB_Blue_RF_Out_1_Dimmed); 
+	encode(PARAMBASE+ RGB_Red_RF_Out_2);
+	encode(PARAMBASE+ RGB_Green_RF_Out_2);
+	encode(PARAMBASE+ RGB_Blue_RF_Out_2);
+	encode(PARAMBASE+ RGB_Red_RF_Out_2_Dimmed);
+	encode(PARAMBASE+ RGB_Green_RF_Out_2_Dimmed);
+	encode(PARAMBASE+ RGB_Blue_RF_Out_2_Dimmed); 
+	encode(PARAMBASE+ MicroStimulationFlag);
+	encode(PARAMBASE+ DrugFlag); 
+	
+	
+	
+	
+	encode(TRIALPARAM_START);
+
+	SendByteA_plus(NLX_TRIALPARAM_START,5);
+	SendByteA_plus(CurrentBlock,5);
+	SendByteA_plus(CurrentCondition,5);
+	SendByteA_plus(CurrentStimcode,5);
+	SendByteA_plus(NLX_TRIALPARAM_END,5);
+	//----------------------------------------------------
+	encode(END_PRE_TRIAL);
+
+	//----------------------------------------------------
+	// prepare CORTEX display
+        
+	display_eye_path(ON);
+	SCREENdraw_fixwin (BLACK);
+
+	/////////////////////
+	// Wait for the bar
+	/////////////////////
+	while ((get_bar_state() == 0) && (esc_flag==0) && (terminate_flag==0))
+	{	
+		esc_flag = KEY_action1();
+	}
+
+	//////////////////////
+	// wait for FIXATION//
+	//////////////////////
+	if ((FIX_CONTROL==1)&&(get_bar_state() == 1)&& (esc_flag==0) && (terminate_flag==0))
+	{
+		put_eye_data_in_buf(1);
+                put_epp_data_in_buf(1);
+                
+		encode(START_EYE_DATA);
+		SendByteA_plus(NLX_RECORD_START,5);
+		Gon_off(FIXSPOT,ON);
+		Gflush(1);
+		encode(TURN_FIXSPOT_ON);
+		MS_TIMERset(FIX_WAIT_TIMER,(long) FIX_WAIT_TIME);
+		while ((MS_TIMERcheck(FIX_WAIT_TIMER) > 0) && (esc_flag==0) && (terminate_flag==0))
+		{   
+			esc_flag =KEY_action1();
+	
+			SCREENdraw_fixwin (DARKGRAY);
+			if(get_fixation_state() == 1)
+			{
+				terminate_flag = 0;
+				//====================================================
+				encode(FIXATION_OCCURS);
+				SendByteA_plus(NLX_SUBJECT_START,5);
+				//====================================================
+				break;
+			}
+			
+			if (get_bar_state() == 0)
+			{
+				response_no_bar_down(0);
+				terminate_flag=1;
+				missed_flag = 1;
+				break;
+			}
+				
+		}
+	}
+	
+	// Wait for Stimuli
+	if ((get_bar_state() == 1)&&(esc_flag==0) && (terminate_flag==0))
+	{
+		
+		
+		MS_TIMERset(TEST_DELAY_TIMER,(long) PRE_TEST_TIME);
+		while ((get_bar_state() == 1)&&(MS_TIMERcheck(TEST_DELAY_TIMER) > 0)&&(esc_flag==0) && (terminate_flag==0))
+		{
+				if ((FIX_CONTROL==1)&&(FixCheck(FIXCHECK_TIMER,MAX_BREAK_FIX_TIME,&breakfix_flag) == 1))
+				{
+					encode(BROKE_FIXATION);
+					break_fixation_error ();
+					SCREENdraw_fixwin (RED);
+					early_flag = 0;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					terminate_flag = 1;
+					eye_error=1;
+					break;
+				}
+				if (get_bar_state() == 0)
+				{
+					encode(BAR_RELEASE_BEFORE_TEST);
+					response_before_test(0);
+					early_flag = 1;
+					terminate_flag = 1;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					break;
+				}
+		}
+	}
+	//============================================================================
+
+	
+	// Pre CUE (play Test + Dist)
+	if ((esc_flag==0) && (terminate_flag==0))
+	{
+		
+		ITEM_POSmark_pos(RFInTestScreen,1,RED);
+		ITEM_POSmark_pos(RFOut1TestScreen,1,GREEN);
+		ITEM_POSmark_pos(RFOut2TestScreen,1,BLUE);
+		Gflush(1);
+                SendByteA_plus(NLX_STIM_ON,5);
+		encode(STIM_ON);
+		for (cFi=0;cFi<PreCueFrameNum;cFi++)
+		{
+			Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+            Gflush(1);
+ 			CurrCueFrameNr++;
+			
+			if ((FIX_CONTROL==1)&&(get_fixation_state()==0))
+			{
+				
+				break_fixation_error ();
+				encode(BROKE_FIXATION);
+				SCREENdraw_fixwin (RED);
+				early_flag = 0;
+				correct_flag = 0;
+				error_flag = 1;
+				missed_flag = 0;
+				terminate_flag = 1;
+				eye_error=1;
+				break;
+			}
+			if (get_bar_state() == 0)
+			{
+				encode(EARLY_BAR_RELEASE);
+				response_early(0);
+				early_flag = 1;
+				terminate_flag = 1;
+				correct_flag = 0;
+				error_flag = 1;
+				missed_flag = 0;
+				break;
+			}
+		}
+	}
+	
+	
+	
+		//============================================================================
+		// Cue + Test + Dist
+		if ((esc_flag==0) && (terminate_flag==0))
+		{	
+			if (cnd_Target_Dist[CurrentCondition-1]==0)
+			{
+				GcolorABS(ITEM_POSlut_index(CueTestScreen,1),RGB_Red_RF_In,RGB_Green_RF_In,RGB_Blue_RF_In);
+				Gflush(1);
+			}
+			else if (cnd_Target_Dist[CurrentCondition-1]==1)
+			{
+				GcolorABS(ITEM_POSlut_index(CueTestScreen,1),RGB_Red_RF_Out_1,RGB_Green_RF_Out_1,RGB_Blue_RF_Out_1);
+				Gflush(1);
+			}
+			else if (cnd_Target_Dist[CurrentCondition-1]==2)
+			{
+				GcolorABS(ITEM_POSlut_index(CueTestScreen,1),RGB_Red_RF_Out_2,RGB_Green_RF_Out_2,RGB_Blue_RF_Out_2);
+				Gflush(1);
+			}			
+			
+			Gon_off(CueTestScreen, ON);
+			Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gflush(1);
+			encode(CUE_ON);
+                        SendByteA_plus(NLX_CUE_ON,5);
+			ITEM_POSmark_pos(CueTestScreen,1,WHITE);
+			
+			
+			for (cFi=0;cFi<PreFirstDimFrameNum;cFi++)
+			{
+				Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+				Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+			    Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+			 	Gflush(1);
+				CurrCueFrameNr++;
+				
+				if ((cFi == PreMicroStimFrameNum) &&(MicroStimulationFlag == 1)) 
+				{
+				DEVoutp(DIOBOARDNR,2,64);
+				if (DrugFlag ==1)
+				{
+				SendByteB(7);
+				}
+				else
+				{SendByteB(1);}
+				encode(MICRO_STIM);
+                SendByteA_plus(NLX_MICRO_STIM,5);
+				}
+				
+				if ((FIX_CONTROL==1)&&(get_fixation_state()==0))
+				{
+					break_fixation_error ();
+					encode(BROKE_FIXATION);
+					SCREENdraw_fixwin (RED);
+					early_flag = 0;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					terminate_flag = 1;
+					eye_error=1;
+					break;
+				}
+				if (get_bar_state() == 0)
+				{
+					encode(EARLY_BAR_RELEASE);
+					response_early(0);
+					early_flag = 1;
+					terminate_flag = 1;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					break;
+				}
+			}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	//============================================================================
+	
+// First Dimming
+	if ((esc_flag==0) && (terminate_flag==0))
+	{
+		
+		if (TargetFirstFlag==1)
+		{DimFrameNum=ReactionMaxFrameNum;}
+		else 
+		{DimFrameNum=PreSeconDimFrameNum;}
+
+		
+		if (TargetFirstFlag==1)
+			{
+				GcolorABS(TARGET_LUTIndex,RED_TARGET_DIMMED,GREEN_TARGET_DIMMED,BLUE_TARGET_DIMMED); 
+				Gflush(1);
+				encode(TEST_DIMMED);
+                SendByteA_plus(NLX_TESTDIMMED,5);
+				encode(DIMMING1);
+                SendByteA_plus(NLX_DIMMING1,5);	
+			}
+					
+			else if (Dist1FirstFlag==1)
+			{
+					
+				GcolorABS(DIST1_LUTIndex,RED_DIST1_DIMMED,GREEN_DIST1_DIMMED,BLUE_DIST1_DIMMED); 
+		 		Gflush(1);
+				encode(DIST1_DIMMED);
+                SendByteA_plus(NLX_DIST1DIMMED,5);
+				encode(DIMMING1);
+                SendByteA_plus(NLX_DIMMING1,5);
+			}
+				
+			else if (Dist2FirstFlag==1)
+			{
+				GcolorABS(DIST2_LUTIndex,RED_DIST2_DIMMED,GREEN_DIST2_DIMMED,BLUE_DIST2_DIMMED); 
+				Gflush(1);	
+				encode(DIST2_DIMMED);
+                SendByteA_plus(NLX_DIST2DIMMED,5);
+				encode(DIMMING1);
+                SendByteA_plus(NLX_DIMMING1,5);
+			}		
+		
+
+		for (cFi=0;cFi<DimFrameNum;cFi++) 
+		{	
+				
+			Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gflush(1);	
+			CurrCueFrameNr++;
+			ReactionTime = ((int) cFi * 1000.0 / (float) FRAMERATE);
+			Mprintf(3,"RT: %d",ReactionTime);
+
+			// check response
+			if ((FIX_CONTROL==1)&&(get_fixation_state()==0))
+			{
+				break_fixation_error ();
+				encode(BROKE_FIXATION);
+                SendByteA_plus(NLX_FIX_BREAK,5);
+				SCREENdraw_fixwin (RED);
+				early_flag = 0;
+				correct_flag = 0;
+				error_flag = 1;
+				missed_flag = 0;
+				terminate_flag = 1;
+				eye_error=1;
+				break;
+			}
+			if (get_bar_state() == 0)
+			{
+				if ((ReactionTime<REACTION_TIME_MIN))
+				{
+					encode(EARLY_BAR_RELEASE);
+                    SendByteA_plus(NLX_EARL_REL,5);
+					response_early(0);
+					early_flag = 1;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					terminate_flag = 1;
+					break;
+				}
+				else if ((ReactionTime>=REACTION_TIME_MIN)&&(ReactionTime<REACTION_TIME_MAX))
+				{
+					if (TargetFirstFlag==1)
+					{
+						encode(BAR_RELEASE_ON_TEST);
+                        SendByteA_plus(NLX_TARG_REL,5);
+						response_correct(0);
+						correct_flag = 1;
+						error_flag = 0;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+					}
+					else 
+					{
+						encode(BAR_RELEASE_ON_DIST);
+						
+						if (cnd_Target_Dist[CurrentCondition-1]==0)
+							{
+						
+							if (Dist1FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_OUT1,5); }
+							else if(Dist2FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_OUT2,5); }
+							}
+						
+						else if (cnd_Target_Dist[CurrentCondition-1]==1)
+							{
+							if (Dist1FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_RF,5); }
+							else if(Dist2FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_OUT2,5); }
+							}						
+						
+						else if (cnd_Target_Dist[CurrentCondition-1]==2)
+							{
+							if (Dist1FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_RF,5); }
+							else if(Dist2FirstFlag==1)
+                                { SendByteA_plus(NLX_DIST_REL_OUT1,5); }
+							}						
+						
+						response_wrong(0);
+						correct_flag = 0;
+						error_flag = 1;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+					}
+				}
+			}
+		}
+		if ((get_bar_state() == 1)&&(cFi==ReactionMaxFrameNum))
+		{
+			correct_flag = 0;
+			terminate_flag = 0;
+			error_flag = 0;
+			missed_flag = 1;
+		}
+	}
+
+	// monkey missed dimming
+	if ((TargetFirstFlag==1)&&(terminate_flag == 0))
+	{
+            SendByteA_plus(NLX_NO_RELEASE,5);
+			response_missing(0);
+			correct_flag = 0;
+			error_flag = 1;
+			missed_flag = 1;
+			terminate_flag = 1;
+	}
+
+	
+
+	
+	
+	
+	
+	//============================================================================
+	// Second Dimming
+	if ((get_bar_state() == 1)&&(esc_flag==0) && (terminate_flag==0))
+	{
+
+		if (TargetSeconFlag==1)
+		{DimFrameNum=ReactionMaxFrameNum;}
+		else 
+		{DimFrameNum=PreThirdDimFrameNum;}
+		
+		
+		if (TargetSeconFlag==1)
+			{
+				GcolorABS(TARGET_LUTIndex,RED_TARGET_DIMMED,GREEN_TARGET_DIMMED,BLUE_TARGET_DIMMED); 
+				Gflush(1);
+				encode(TEST_DIMMED);
+				SendByteA_plus(NLX_TESTDIMMED,5);
+				encode(DIMMING2);
+				SendByteA_plus(NLX_DIMMING2,5);			
+			}
+			else if (Dist1SeconFlag==1)
+			{
+						
+				GcolorABS(DIST1_LUTIndex,RED_DIST1_DIMMED,GREEN_DIST1_DIMMED,BLUE_DIST1_DIMMED); 
+				Gflush(1);
+				encode(DIST1_DIMMED);
+				SendByteA_plus(NLX_DIST1DIMMED,5);
+				encode(DIMMING2);
+				SendByteA_plus(NLX_DIMMING2,5);
+			}
+						
+				else if (Dist2SeconFlag==1)
+			{
+				GcolorABS(DIST2_LUTIndex,RED_DIST2_DIMMED,GREEN_DIST2_DIMMED,BLUE_DIST2_DIMMED); 
+				Gflush(1);
+				encode(DIST2_DIMMED);
+				SendByteA_plus(NLX_DIST2DIMMED,5);
+				encode(DIMMING2);
+				SendByteA_plus(NLX_DIMMING2,5);
+			}
+
+
+		for (cFi=0;cFi<DimFrameNum;cFi++) 
+		{
+					
+					
+			Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+			Gflush(1);
+			CurrCueFrameNr++;
+			
+			ReactionTime = ((int) cFi * 1000.0 / (float) FRAMERATE);
+			Mprintf(3,"RT: %d",ReactionTime);
+
+			// check response
+			if ((FIX_CONTROL==1)&&(get_fixation_state()==0))
+			{
+				break_fixation_error ();
+				encode(BROKE_FIXATION);
+                SendByteA_plus(NLX_FIX_BREAK,5);
+				SCREENdraw_fixwin (RED);
+				early_flag = 0;
+				correct_flag = 0;
+				error_flag = 1;
+				missed_flag = 0;
+				terminate_flag = 1;
+				eye_error=1;
+				break;
+			}
+			if (get_bar_state() == 0)
+			{
+				if ((ReactionTime<REACTION_TIME_MIN))
+				{
+					encode(EARLY_BAR_RELEASE);
+                    SendByteA_plus(NLX_EARL_REL,5);
+					response_early(0);
+					early_flag = 1;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					terminate_flag = 1;
+					break;
+				}
+				else if ((ReactionTime>=REACTION_TIME_MIN)&&(ReactionTime<REACTION_TIME_MAX))
+				{
+					if (TargetSeconFlag==1)
+					{
+						encode(BAR_RELEASE_ON_TEST);
+                        SendByteA_plus(NLX_TARG_REL,5);
+						response_correct(0);
+						correct_flag = 1;
+						error_flag = 0;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+					}
+					else 
+					{
+							
+						encode(BAR_RELEASE_ON_DIST);
+						
+						
+					if (cnd_Target_Dist[CurrentCondition-1]==0)
+						{
+					
+						if (Dist1SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_OUT1,5);}
+						else if(Dist2SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_OUT2,5);}
+						}
+					
+					else if (cnd_Target_Dist[CurrentCondition-1]==1)
+						{
+					
+						if (Dist1SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_RF,5);}
+						else if(Dist2SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_OUT2,5);}
+						}						
+					
+					else if (cnd_Target_Dist[CurrentCondition-1]==2)
+						{
+					
+						if (Dist1SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_RF,5);}
+						else if(Dist2SeconFlag==1)
+                        { SendByteA_plus(NLX_DIST_REL_OUT1,5);}
+						}
+						
+						response_wrong(0);
+						correct_flag = 0;
+						error_flag = 1;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+					}
+				}
+			}
+		}
+		if ((get_bar_state() == 1)&&(cFi==ReactionMaxFrameNum))
+		{
+			correct_flag = 0;
+			terminate_flag = 0;
+			error_flag = 0;
+			missed_flag = 1;
+		}
+	}
+
+	// monkey missed dimming
+	if ((TargetSeconFlag==1)&&(terminate_flag == 0))
+	{
+		SendByteA_plus(NLX_NO_RELEASE,5);
+		response_missing(0);
+		correct_flag = 0;
+		error_flag = 1;
+		missed_flag = 1;
+		terminate_flag = 1;
+	}
+
+	
+	
+	
+	
+	
+		//============================================================================
+		// Third Dimming
+		if ((get_bar_state() == 1)&&(esc_flag==0) && (terminate_flag==0))
+		{
+			
+			DimFrameNum=ReactionMaxFrameNum;
+		
+			if (TargetThirdFlag==1)
+				{
+					GcolorABS(TARGET_LUTIndex,RED_TARGET_DIMMED,GREEN_TARGET_DIMMED,BLUE_TARGET_DIMMED); 
+					Gflush(1);	
+					encode(TEST_DIMMED);
+                    SendByteA_plus(NLX_TESTDIMMED,5);
+					encode(DIMMING3);
+                    SendByteA_plus(NLX_DIMMING3,5);		
+				}
+							
+				else if (Dist1ThirdFlag==1)
+				{		
+					GcolorABS(DIST1_LUTIndex,RED_DIST1_DIMMED,GREEN_DIST1_DIMMED,BLUE_DIST1_DIMMED); 
+					Gflush(1);
+			 		encode(DIST1_DIMMED);
+                    SendByteA_plus(NLX_DIST1DIMMED,5);
+					encode(DIMMING3);
+                    SendByteA_plus(NLX_DIMMING3,5);
+				}
+							
+				else if (Dist2ThirdFlag==1)
+				{
+					GcolorABS(DIST2_LUTIndex,RED_DIST2_DIMMED,GREEN_DIST2_DIMMED,BLUE_DIST2_DIMMED); 
+					Gflush(1);
+					encode(DIST2_DIMMED);
+                    SendByteA_plus(NLX_DIST2DIMMED,5);
+					encode(DIMMING3);
+                    SendByteA_plus(NLX_DIMMING3,5);
+				}
+			
+			
+			for (cFi=0;cFi<DimFrameNum;cFi++) 
+			{	
+				Gmovie_step(RFInTestScreen,StimDir,MOVIE_STEP_WRAP);
+				Gmovie_step(RFOut1TestScreen,StimDir,MOVIE_STEP_WRAP);
+				Gmovie_step(RFOut2TestScreen,StimDir,MOVIE_STEP_WRAP);
+				Gflush(1);
+				CurrCueFrameNr++;
+	
+				ReactionTime = ((int) cFi * 1000.0 / (float) FRAMERATE);
+				Mprintf(3,"RT: %d",ReactionTime);
+	
+				// check response
+				if ((FIX_CONTROL==1)&&(get_fixation_state()==0))
+				{
+					break_fixation_error ();
+					encode(BROKE_FIXATION);
+                    SendByteA_plus(NLX_FIX_BREAK,5);
+					SCREENdraw_fixwin (RED);
+					early_flag = 0;
+					correct_flag = 0;
+					error_flag = 1;
+					missed_flag = 0;
+					terminate_flag = 1;
+					eye_error=1;
+					break;
+				}
+				if (get_bar_state() == 0)
+				{
+					if ((ReactionTime<REACTION_TIME_MIN))
+					{
+						encode(EARLY_BAR_RELEASE);
+                        SendByteA_plus(NLX_EARL_REL,5);
+						response_early(0);
+						early_flag = 1;
+						correct_flag = 0;
+						error_flag = 1;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+					}
+					else if ((ReactionTime>=REACTION_TIME_MIN)&&(ReactionTime<REACTION_TIME_MAX))
+					{
+						if (TargetThirdFlag==1)
+						{
+							encode(BAR_RELEASE_ON_TEST);
+                            SendByteA_plus(NLX_TARG_REL,5);
+							response_correct(0);
+							correct_flag = 1;
+							error_flag = 0;
+							missed_flag = 0;
+							terminate_flag = 1;
+							break;
+						}
+						else  
+						{
+						encode(BAR_RELEASE_ON_DIST);
+						if (cnd_Target_Dist[CurrentCondition-1]==0)
+							{
+							if (Dist1ThirdFlag==1)
+								{ SendByteA_plus(NLX_DIST_REL_OUT1,5);}
+							else if(Dist2ThirdFlag==1)
+								{ SendByteA_plus(NLX_DIST_REL_OUT2,5);}
+							}
+					
+						else if (cnd_Target_Dist[CurrentCondition-1]==1)
+							{
+							if (Dist1ThirdFlag==1)
+								{ SendByteA_plus(NLX_DIST_REL_RF,5);}
+							else if(Dist2ThirdFlag==1)
+								{ SendByteA_plus(NLX_DIST_REL_OUT2,5);}
+							}						
+					
+						else if (cnd_Target_Dist[CurrentCondition-1]==2)
+							{
+							if (Dist1ThirdFlag==1)
+							 { SendByteA_plus(NLX_DIST_REL_RF,5);}
+							else if(Dist2ThirdFlag==1)
+							 { SendByteA_plus(NLX_DIST_REL_OUT1,5);}
+							}							
+								
+						response_wrong(0);
+						correct_flag = 0;
+						error_flag = 1;
+						missed_flag = 0;
+						terminate_flag = 1;
+						break;
+						}
+					}
+				}
+			}
+			if ((get_bar_state() == 1)&&(cFi==ReactionMaxFrameNum))
+			{
+				correct_flag = 0;
+				terminate_flag = 0;
+				error_flag = 0;
+				missed_flag = 1;
+			}
+		}
+	
+		// monkey missed dimming
+		if ((TargetThirdFlag==1)&&(terminate_flag == 0))
+		{
+                        SendByteA_plus(NLX_NO_RELEASE,5);
+			response_missing(0);
+			correct_flag = 0;
+			error_flag = 1;
+			missed_flag = 1;
+			terminate_flag = 1;
+		}
+	
+	
+
+	
+	
+	//============================================================================
+	//============================================================================
+	
+	
+	Gpurge();
+	Gon_off(TargetScreen,OFF);
+	Gon_off(Dist1Screen, OFF);
+	Gon_off(Dist2Screen, OFF);
+	Gon_off(CueTestScreen, OFF);
+	Gflush(1);
+        SendByteA_plus(NLX_STIM_OFF,5);
+	encode(STIM_ON);
+	
+	if (correct_flag==1)
+	{
+		set_timer(POST_FIXATION_TIME);
+		while(timer_expired() == 0)
+		
+		{
+			if (get_fixation_state()==0)
+			{
+				break_fixation_error();
+				encode(BROKE_FIXATION);
+				correct_flag = 0;
+				error_flag = 1;
+				eye_error=1;
+				break;
+			}
+		}
+	}
+	Gon_off(FIXSPOT,OFF);
+	Gflush(1);
+	encode(TURN_FIXSPOT_OFF);
+	SCREENdraw_fixwin (BLACK);
+	ITEM_POSmark_pos(TargetScreen,1,BLACK);
+	ITEM_POSmark_pos(Dist1Screen,1,BLACK);
+	ITEM_POSmark_pos(Dist2Screen,1,BLACK);
+	
+	
+	display_eye_path(OFF);
+	put_eye_data_in_buf(OFF);
+        put_epp_data_in_buf(OFF);
+        
+	encode(END_EYE_DATA);
+	SendByteA_plus(NLX_SUBJECT_END,5);
+
+	/////////////////////////
+	// evaluate response
+	/////////////////////////
+
+	if (correct_flag==1)
+	{
+		NumHits++;
+		readdata_flag = 1;
+		response_correct(0);
+		encode(REWARD);
+                GiveRewPulseCrist(rewpulse_num);
+		TrialCounter=TrialCounter-1;
+
+		if (CorrectInRow> 4)
+		{ CorrectInRow =4;}
+
+		set_timer(INTERTRIAL);
+		while(timer_expired() == 0);	
+        CorrectInRow++;	
+	}
+	else if ((correct_flag==0)&&(error_flag==0))
+	{
+		response_missing (0);
+		readdata_flag = 0;
+		CorrectInRow =0;
+	}
+	else if ((correct_flag==0)&&(error_flag==1)&&(eye_error==0))
+	{	
+		readdata_flag = 0;
+		set_timer(INTERTRIAL+PENALTY_TIME);
+		while(timer_expired() == 0);
+		CorrectInRow =0;	
+	}
+	else if ((correct_flag==0)&&(error_flag==1)&&(eye_error==1))	
+	{	
+		readdata_flag = 0;
+		set_timer(INTERTRIAL+(PENALTY_TIME*0.25));
+		while(timer_expired() == 0);		
+	}
+	
+	Precondition = CurrentCondition;	
+	
+
+if (MICROSTIM ==1)
+{
+	fpNew = fopen(PERFORMANCE_NEW_FILE_NAME , "ab" );
+	PerformanceNew = CurrentCondition;
+	p=fwrite (&PerformanceNew,sizeof(pint),1,fpNew);
+	
+	PerformanceNew = MicroStimulationFlag;
+	p=fwrite (&PerformanceNew,sizeof(pint),1,fpNew);
+	
+	PerformanceNew = correct_flag;
+	p=fwrite (&PerformanceNew,sizeof(pint),1,fpNew);
+		
+	fclose(fpNew);
+	
+	a=remove(PERFORMANCE_OLD_FILE_NAME);
+	b=rename(PERFORMANCE_NEW_FILE_NAME,PERFORMANCE_OLD_FILE_NAME);
+}
+
+	
+
+	
+
+	//====================================================
+	SendByteA_plus(NLX_RECORD_END,5);
+	if (readdata_flag==1) 
+		{ 
+		SendByteA_plus(NLX_READ_DATA,5);
+		}
+	SendByteA_plus(NLX_TRIAL_END,5);
+	//====================================================
+	return;
+}
+
+
+/********************************************/
+/****  Functions used in the main block  ****/
+/********************************************/
+#include "AL_INCL/AL_FUN.STT"

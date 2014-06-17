@@ -48,6 +48,8 @@ clear ctxDataTemp
 nrTrials = length(ctxData);
 if ~( (length(dividedSpikeArray)==nrTrials) && (length(dividedEventfile)==nrTrials) );
     error('Number of trials not consistent');
+else
+    Data = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
 end
 
 %[trialData] = Extract_CTX_TrialParm_Grcjdru1(cortex_event_arr);

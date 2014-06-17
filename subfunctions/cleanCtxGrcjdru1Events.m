@@ -1,4 +1,4 @@
-function [ctxDataOut] = cleanCtxGrcjdru1Events(ctxData)
+function [ctxDataOut] = CleanCtxGrcjdru1Events(ctxData)
 % reads the ctx data file from CTX_Read2Struct and cleans it up assuming
 % that the data is from a GrcjDru1 experiment. It returns the structure
 % with a lot more information speficic to the grcjdru1 experiment
@@ -25,9 +25,9 @@ for i = 1:length(ctxData);
     ctxDataOut(i).targetDim  = trialData.targetDim;
     ctxDataOut(i).dist1Dim   = trialData.dist1Dim;
     ctxDataOut(i).dist2Dim   = trialData.dist2Dim;
-    ctxDataOut(i).RFDim      = trialData.RFDim; 
-    ctxDataOut(i).Out1Dim    = trialData.Out1Dim;
-    ctxDataOut(i).Out2Dim    = trialData.Out2Dim;
+    ctxDataOut(i).rfDim      = trialData.rfDim; 
+    ctxDataOut(i).out1Dim    = trialData.out1Dim;
+    ctxDataOut(i).out2Dim    = trialData.out2Dim;
     % Colors
     ctxDataOut(i).color_In        = trialData.color_In;
     ctxDataOut(i).color_In_dim    = trialData.color_In_dim;
