@@ -39,7 +39,7 @@ end
 
 
 %% extract all the data
-isHeader = false(NrEvents,1);
+isHeader = false(nrEvents,1);
 isHeader((headerEndpoints(1)+1):headerEndpoints(2)-1) = true ;
 parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
 

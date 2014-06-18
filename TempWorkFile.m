@@ -42,15 +42,12 @@ clear spikeArray isSelectedCell
 
 % read the cortex file and align the data
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
-ctxData = cleanCtxGrcjdru1Events(ctxDataTemp);
+ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
 clear ctxDataTemp
 
-nrTrials = length(ctxData);
-if ~( (length(dividedSpikeArray)==nrTrials) && (length(dividedEventfile)==nrTrials) );
-    error('Number of trials not consistent');
-else
-    Data = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
-end
+
+allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
+clear dividedSpikeArray dividedEventfile ctxData
 
 %[trialData] = Extract_CTX_TrialParm_Grcjdru1(cortex_event_arr);
  % some function to align the data and make sure it is aligned correctly
@@ -68,28 +65,149 @@ end
 % attend    = [ctxData.attend]';
 % condition = [ctxData.condition]';
 
-isError   = [ctxData.error]';  % did the program find any errors 
-isCorrect = [ctxData.correctTrial]'; % did the monkey compleate the task
-targetDim = [ctxData.targetDim]'; % When did the target dim 1,2 or 3
-rfDim = [ctxData.RFDim]'; % when did the object in RF dim?
-validTrials = ((isCorrect) | (~isError)) & ((rfDim==1) | (rfDim==2));  % Find trials that are correct, has no errors, and dim 1 or 2
+isError   = [allData.error]';  % did the program find any errors 
+isCorrect = [allData.correctTrial]'; % did the monkey compleate the task
+%targetDim = [allData.targetDim]'; % When did the target dim 1,2 or 3
+%rfDim = [allData.rfDim]'; % when did the object in RF dim?
+validTrials = ((isCorrect) & (~isError));  % Find trials that are correct, has no errors, and dim 1 or 2
 clear isError isCorrect targetDim
 
-cortexEvents = ctxData(validTrials);
-nlxEvents = dividedEventfile(validTrials);
-spikeArrays = dividedSpikeArray(validTrials);
+selectedData = allData(validTrials);
+
 % Plot the data
 %   get the spikes for the groups
 %   make histograms
 % 
 
-% plot
+%% plot
 
-x =[cortexEvents.RFDim]'==1 & [cortexEvents.targetDim]'==1; % first dimming is in the RF and is the target
-y =[cortexEvents.RFDim]'==1 & ~([cortexEvents.targetDim]'==1); % first dimming is in the RF and is not the target
+% possible alignments points
+% NLX_TRIAL_START      = 255;    
+% NLX_RECORD_START     =   2;    
+% NLX_SUBJECT_START    =   4;    
+% NLX_STIM_ON          =   8;    
+% NLX_STIM_OFF         =  16;    
+% NLX_SUBJECT_END      =  32;    
+% NLX_RECORD_END       =  64;   
+% NLX_TRIAL_END        = 254;
 
-x =[cortexEvents.RFDim]'==2 & [cortexEvents.targetDim]'==2; % second dimming is in the RF and is the target
-y =[cortexEvents.RFDim]'==2 & ~([cortexEvents.targetDim]'==2); % second dimming is in the RF and is not the target
+% NLX_TESTDIMMED       =  17;
+% NLX_DISTDIMMED       =  18;
+% NLX_BARRELEASED      =  19;
+ NLX_CUE_ON           =  20;
+% NLX_CUE_OFF          =  21;
+% NLX_DIST1DIMMED      =  22;
+% NLX_DIST2DIMMED      =  23;
+% NLX_SACCADE_START    =  24;
+NLX_DIMMING1	     =  25; 	 	
+% NLX_DIMMING2	       =  26;	
+% NLX_DIMMING3         =  27;
+% NLX_MICRO_STIM	   =  28;
+% NLX_FIXSPOT_OFF	   =  29;
+
+ x =[selectedData.rfDim]'==1 & [selectedData.targetDim]'==1; % first dimming is in the RF and is the target
+% x =[selectedData.rfDim]'==1 & ~([selectedData.targetDim]'==1); % first dimming is in the RF and is not the target
+
+xData = selectedData(x);
+
+alignEvent = NLX_CUE_ON ;
+
+% extract the spike data from xData
+
+
+timeArray=(-1000:2000);
+y = ones(size(timeArray));
+sp2 = zeros(length(xData),length(timeArray));
+xPlot = [];
+yPlot = [];
+yValue = 0;
+% konstants used for fitting the histogram
+sigma = 10;
+k1 = 1/(sigma*sqrt(2*pi));
+k2 = 2*sigma^2;
+
+for i=1:length(xData)
+    spikes = xData(i).nlxSpikes(:,1); % get the spike times for the trial
+    events = xData(i).nlxEvents; % read the neuralynx events for the trial
+    alignEventPos = find(events(:,2) == alignEvent,1,'last'); % find the event to align the spikes to
+    if ~isempty(alignEventPos) % skip trials that dont have a start event
+        alignTime = events(alignEventPos,1); % get the time for that event
+        spikes = (spikes - alignTime)/1000;
+        % this function smoothes out each spike so it counts in several
+        % bins. It works like a form of interpolation        
+        for j=1:length(spikes)
+            sp1 = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); %(y*(k1).*exp(-(((timeArray-spikes(j)).^2)/(k2))));
+            sp2(i,:) = sp2(i,:) + sp1;
+        end
+        % This part generates the coordinates for plotting the spikes
+        xPlot = [xPlot, spikes']; 
+        yPlot = [yPlot, ones(size(spikes'))*yValue]; % 
+        yValue = yValue+1;
+    end
+end
+
+% plot the histogram
+handleHistogram = figure;
+histogram = mean(sp2);
+histogram = gaussfit(30,0,histogram);
+plot(timeArray,sp4,'LineWidth',2,'Color',[0 0 0]);
+
+% plot the spike data
+    % reorganize the data to line coordinates
+    n1 = nan(size(xPlot));
+    x2 = [xPlot;xPlot;n1];
+    A = reshape(x2,1,[]);    
+    
+    n1 = nan(1,length(yPlot));
+    y2 = [yPlot;yPlot+1;n1];
+    B = reshape(y2,1,[]);
+ 
+    line(A,B);
+    
+%%  histograms
+
+k1 = 1/(sigma*sqrt(2*pi));
+k2 = 2*sigma^2;
+timeArray=(-1000:2000);
+y = ones(size(timeArray));
+sp2 = zeros(length(xData),length(timeArray));
+
+
+
+for i=1:length(xData)
+    spikes = xData(i).nlxSpikes(:,1); % get the spike times for the trial
+    events = xData(i).nlxEvents; % read the neuralynx events for the trial
+    alignEventPos = find(events(:,2) == alignEvent,1,'last'); % find the event to align the spikes to
+    if ~isempty(alignEventPos) % skip trials that dont have a start event
+        alignTime = events(alignEventPos,1); % get the time for that event
+        spikes = (spikes - alignTime)/1000;
+        for j=1:length(spikes)
+            % this function smoothes out each spike so it counts in several
+            % bins. It works like a form of interpolation
+            sp1 = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); %(y*(k1).*exp(-(((timeArray-spikes(j)).^2)/(k2))));
+            sp2(i,:) = sp2(i,:) + sp1;
+        end
+    end
+end
+
+sp3 = mean(sp2)*1000;
+sp4 = gaussfit(30,0,sp3);
+
+    figure
+    line(A,B);
+    hold on
+plot(timeArray,sp4,'LineWidth',1,'Color',[0 0 0]);
+
+%%
+
+        prl= squeeze(meandata(1,h,COND,1:length(t_stim)));
+        %%%%% this does the smoothing of histograms
+        plotdata=gaussfit(30,0,prl');
+        plot(t_stim,plotdata','color',col,'linewidth',LWidth); 
+    
+
+% x =[selectedData.rfDim]'==2 & [selectedData.targetDim]'==2; % second dimming is in the RF and is the target
+% y =[selectedData.rfDim]'==2 & ~([selectedData.targetDim]'==2); % second dimming is in the RF and is not the target
 
 % [figHandle,maxSpikeRate] = PlotRast(Group1,Group2,AlignEvent,tWin,mode);
 % [figHandle,maxSpikeRate] = ScaleRast(figHandle,maxSpikeRate);
