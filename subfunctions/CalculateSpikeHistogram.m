@@ -14,16 +14,20 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 % plotData.ySpikes = y coordinates for spikes
 % plotData.xHistogram = x coordinates for Histogram (same as timeArray);
 % plotData.yHistogram = y coordinates for Histogram
+%  The histogram values are not scaled!
 
 
-spikesSmooth = zeros(length(xData),length(timeArray));
-xPlot = [];
-yPlot = [];
-yValue = 0;
 % konstants used for fitting the histogram
 sigma = 10;
 k1 = 1/(sigma*sqrt(2*pi));
 k2 = 2*sigma^2;
+
+% initialize
+spikesSmooth = zeros(length(xData),length(timeArray));
+xPlot = [];
+yPlot = [];
+yValue = 0;
+
 
 for i=1:length(xData)
     spikes = xData(i).nlxSpikes(:,1); % get the spike times for the trial
@@ -47,8 +51,10 @@ for i=1:length(xData)
     end
 end
 
+% set return values, you can add more without breaking anything as long as
+% you don't remove any. I plan to add SD and the like. 
 plotData.xSpikes = xPlot;
 plotData.ySpikes = yPlot;
 plotData.xHistogram = timeArray;
-plotData.yHistogram = spikesSmooth;
-plotData.maxHist = max(spikesSmooth);
+plotData.yHistogram = mean(spikesSmooth);
+plotData.maxHist = max(mean(spikesSmooth));
