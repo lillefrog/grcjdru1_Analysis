@@ -109,60 +109,40 @@ NLX_DIMMING1	     =  25;
 % x =[selectedData.rfDim]'==1 & ~([selectedData.targetDim]'==1); % first dimming is in the RF and is not the target
 
 xData = selectedData(x);
-
-alignEvent = NLX_CUE_ON ;
+alignEvent = NLX_DIMMING1;
+timeArray=(-1000:2000);
 
 % extract the spike data from xData
 
 
-timeArray=(-1000:2000);
-y = ones(size(timeArray));
-sp2 = zeros(length(xData),length(timeArray));
-xPlot = [];
-yPlot = [];
-yValue = 0;
-% konstants used for fitting the histogram
-sigma = 10;
-k1 = 1/(sigma*sqrt(2*pi));
-k2 = 2*sigma^2;
+[plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent);
 
-for i=1:length(xData)
-    spikes = xData(i).nlxSpikes(:,1); % get the spike times for the trial
-    events = xData(i).nlxEvents; % read the neuralynx events for the trial
-    alignEventPos = find(events(:,2) == alignEvent,1,'last'); % find the event to align the spikes to
-    if ~isempty(alignEventPos) % skip trials that dont have a start event
-        alignTime = events(alignEventPos,1); % get the time for that event
-        spikes = (spikes - alignTime)/1000;
-        % this function smoothes out each spike so it counts in several
-        % bins. It works like a form of interpolation        
-        for j=1:length(spikes)
-            sp1 = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); %(y*(k1).*exp(-(((timeArray-spikes(j)).^2)/(k2))));
-            sp2(i,:) = sp2(i,:) + sp1;
-        end
-        % This part generates the coordinates for plotting the spikes
-        xPlot = [xPlot, spikes']; 
-        yPlot = [yPlot, ones(size(spikes'))*yValue]; % 
-        yValue = yValue+1;
-    end
-end
+
+
 
 % plot the histogram
-handleHistogram = figure;
-histogram = mean(sp2);
-histogram = gaussfit(30,0,histogram);
-plot(timeArray,sp4,'LineWidth',2,'Color',[0 0 0]);
+
+maxSpike = max(mean(plotData.histogram));
+histogram = mean(plotData.histogram);
+histogram = (gaussfit(30,0,histogram)/maxSpike)*100;
 
 % plot the spike data
     % reorganize the data to line coordinates
+    xPlot = plotData.xSpikes;
     n1 = nan(size(xPlot));
     x2 = [xPlot;xPlot;n1];
     A = reshape(x2,1,[]);    
     
+    yPlot = plotData.ySpikes;
     n1 = nan(1,length(yPlot));
     y2 = [yPlot;yPlot+1;n1];
     B = reshape(y2,1,[]);
  
-    line(A,B);
+    figHistogram = figure;
+    hold on
+    line(A,B); % plot spikes
+    plot(timeArray,histogram,'LineWidth',2,'Color',[0 0 0]);
+    hold off
     
 %%  histograms
 
