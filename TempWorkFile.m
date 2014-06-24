@@ -8,11 +8,11 @@ addpath(genpath('E:\doc\GitHub\grcjdru1_Analysis\'));
 % the needed filenames. It should probably also generate the start and stop
 % events 
 
-eventFilename = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\Events.Nev';
-LFP_fileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\LFP17.ncs';
-spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE';
-cortexFilename = 'E:\JonesRawData\PEN312\Cortex\140528\GRCJDRU1.517';
 
+spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE';
+CELL_NUMBER = 4;
+
+[eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
 
 %% Read the files and extract the data
 % this should only be very general function that don't depend much on what
@@ -33,7 +33,6 @@ stopTrialEvent = 254;
 clear startTrialEvent stopTrialEvent cutEventfile
 
 % Read the NSE spike file
-CELL_NUMBER = 4;
 [spikeArray] = NLX_ReadNSEFileShort(spikeFileName);
 isSelectedCell = (spikeArray(:,2)==CELL_NUMBER);
 spikeArray = spikeArray(isSelectedCell,:);
@@ -43,6 +42,9 @@ clear spikeArray isSelectedCell
 % read the cortex file and align the data
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
 ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
+
+ctxData = GetReactionTime(ctxData);
+
 clear ctxDataTemp CELL_NUMBER
 
 
@@ -52,7 +54,7 @@ clear dividedSpikeArray dividedEventfile ctxData
 %[trialData] = Extract_CTX_TrialParm_Grcjdru1(cortex_event_arr);
  % some function to align the data and make sure it is aligned correctly
 
-%% Analyze 
+%% select what to Analyze (this is the overall selection )
 
 % select the trials we want
 % go trough the trails and find the first spike skip all trials before that
@@ -91,45 +93,53 @@ clear isError isCorrect targetDim validTrials allData
 % NLX_DIST1DIMMED      =  22;
 % NLX_DIST2DIMMED      =  23;
 % NLX_SACCADE_START    =  24;
-NLX_DIMMING1	     =  25; 	 	
-% NLX_DIMMING2	       =  26;	
+NLX_DIMMING1	       =  25; 	 	
+NLX_DIMMING2	       =  26;	
 % NLX_DIMMING3         =  27;
 % NLX_MICRO_STIM	   =  28;
 % NLX_FIXSPOT_OFF	   =  29;
 
 
-% attend in vs attend out
-%   selectA =[validData.rfDim]'==1 & [validData.targetDim]'==1 & [validData.drug]'; % first dimming is in the RF and is the target
-%   selectB =[validData.rfDim]'==1 & ~([validData.targetDim]'==1) & [validData.drug]'; % first dimming is in the RF and is not the target
-
-% drug vs no drug
+%% drug vs no drug first dimming
   selectRough = [validData.rfDim]'==1 & [validData.targetDim]'==1 ; % select what the groups have in common
   selectA = selectRough &  [validData.drug]'; % drug
   selectB = selectRough & ~[validData.drug]'; % no drug
- 
-DataA = validData(selectA);
-DataB = validData(selectB);
-
-alignEvent = NLX_DIMMING1;
-timeArray=(-1000:2000);
+  DataA = validData(selectA);
+  DataB = validData(selectB);
 
 % extract the spike data from Data
-[plotDataA] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
-[plotDataB] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
+alignEvent = NLX_DIMMING1;
+timeArray=(-1000:2000);
+[plotDataA1] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
+[plotDataB1] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
 
-% plot the data
+%% drug vs no drug second dimming
+  selectRough = [validData.rfDim]'==2 & [validData.targetDim]'==2 ; % select what the groups have in common
+  selectA = selectRough &  [validData.drug]'; % drug
+  selectB = selectRough & ~[validData.drug]'; % no drug
+  DataA = validData(selectA);
+  DataB = validData(selectB);
+
+% extract the spike data from Data
+alignEvent = NLX_DIMMING2;
+timeArray=(-1000:2000);
+[plotDataA2] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
+[plotDataB2] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
+
+
+  
+  
+%% plot the data
 xLimits = [-1000 1000];
-histScale = max([plotDataA.maxHist, plotDataA.maxHist]);
-spikeShift = 100;
  
 figure('color',[1 1 1])
-subplot(2,2,1);
+%subplot(2,1,2);
 
-plotData = [plotDataA,plotDataB];
+plotData = [plotDataA1,plotDataB1,plotDataA2,plotDataB2];
+histScale = max([plotData.maxHist]);
 PlotSpikeHistogram(plotData,xLimits,histScale);
 
-
-
-
+data=plotDataA1.yHistogram;
+dataz = data/histScale;
 
 

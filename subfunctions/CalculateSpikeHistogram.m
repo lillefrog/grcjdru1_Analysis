@@ -2,6 +2,8 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 % function for preparing a histogram from trial data, it doesn't plot
 % anything jut prepare the data. Use PlotSpikeHistogram to plot the data.
 %
+%[plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
+%
 % input 
 % xData = structure array contaning at least 
 %   xData().nlxSpikes = array of spike times
@@ -14,8 +16,9 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 % plotData.ySpikes = y coordinates for spikes
 % plotData.xHistogram = x coordinates for Histogram (same as timeArray);
 % plotData.yHistogram = y coordinates for Histogram
-%  The histogram values are not scaled!
+% The histogram values are probably not scaled correctly!
 
+SLOW = true;
 
 % konstants used for fitting the histogram
 sigma = 10;
@@ -37,12 +40,17 @@ for i=1:length(xData)
         alignTime = events(alignEventPos,1); % get the time for that event
         spikes = (spikes - alignTime)/1000; % recalculate to mS
         
+       if SLOW 
         % this function smoothes out each spike so it counts in several
         % bins. It works like a form of interpolation        
         for j=1:length(spikes)
             sp1 = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); 
             spikesSmooth(i,:) = spikesSmooth(i,:) + sp1;
         end
+       else % faster version of the interpolation (not that much faster)
+        spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
+        spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
+       end
         
         % This part generates the coordinates for plotting the spikes
         xPlot = [xPlot, spikes'];  %#ok<AGROW>

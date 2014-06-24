@@ -32,7 +32,9 @@ for i=1:size(plotData,2)
     end
     
 % plot the histogram
+    %histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
     histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
+    
     plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
     
 % plot the spike data
