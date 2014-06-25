@@ -43,7 +43,7 @@ clear spikeArray isSelectedCell
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
 ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
 
-ctxData = GetReactionTime(ctxData);
+ctxData = GetCtxReactionTime(ctxData);
 
 clear ctxDataTemp CELL_NUMBER
 
