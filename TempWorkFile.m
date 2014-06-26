@@ -79,7 +79,7 @@ clear isError isCorrect targetDim validTrials allData
 % NLX_TRIAL_START      = 255;    
 % NLX_RECORD_START     =   2;    
 % NLX_SUBJECT_START    =   4;    
-% NLX_STIM_ON          =   8;    
+ NLX_STIM_ON          =   8;    
 % NLX_STIM_OFF         =  16;    
 % NLX_SUBJECT_END      =  32;    
 % NLX_RECORD_END       =  64;   
@@ -101,45 +101,146 @@ NLX_DIMMING2	       =  26;
 
 
 %% drug vs no drug first dimming
-  selectRough = [validData.rfDim]'==1 & [validData.targetDim]'==1 ; % select what the groups have in common
-  selectA = selectRough &  [validData.drug]'; % drug
-  selectB = selectRough & ~[validData.drug]'; % no drug
-  DataA = validData(selectA);
-  DataB = validData(selectB);
+%   selectRough = [validData.rfDim]'==1 & [validData.targetDim]'==1 ; % select what the groups have in common
+%   selectA = selectRough &  [validData.drug]'; % drug
+%   selectB = selectRough & ~[validData.drug]'; % no drug
+%   DataA = validData(selectA);
+%   DataB = validData(selectB);
+% 
+% % extract the spike data from Data
+% alignEvent = NLX_DIMMING1;
+% timeArray=(-1000:2000);
+% [plot_1dim_drug]   = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
+% [plot_1dim_nodrug] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
+% 
+% clear selectRough selectA selectB timeArray DataA DataA
 
-% extract the spike data from Data
-alignEvent = NLX_DIMMING1;
-timeArray=(-1000:2000);
-[plotDataA1] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
-[plotDataB1] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
 
 %% drug vs no drug second dimming
-  selectRough = [validData.rfDim]'==2 & [validData.targetDim]'==2 ; % select what the groups have in common
-  selectA = selectRough &  [validData.drug]'; % drug
-  selectB = selectRough & ~[validData.drug]'; % no drug
-  DataA = validData(selectA);
-  DataB = validData(selectB);
-
-% extract the spike data from Data
-alignEvent = NLX_DIMMING2;
-timeArray=(-1000:2000);
-[plotDataA2] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
-[plotDataB2] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
-
-
+%   selectRough = [validData.rfDim]'==2 & [validData.targetDim]'==2 ; % select what the groups have in common
+%   selectA = selectRough &  [validData.drug]'; % drug
+%   selectB = selectRough & ~[validData.drug]'; % no drug
+%   DataA = validData(selectA);
+%   DataB = validData(selectB);
+% 
+% % extract the spike data from Data
+% alignEvent = NLX_DIMMING2;
+% timeArray=(-1000:2000);
+% [plot_2dim_drug] = CalculateSpikeHistogram(DataA,timeArray,alignEvent);
+% [plot_2dim_nodrug] = CalculateSpikeHistogram(DataB,timeArray,alignEvent);
+% 
+% clear selectRough selectA selectB timeArray DataA DataA
   
-  
-%% plot the data
+%% small plot the data
+% xLimits = [-1000 1000];
+%  
+% figure('color',[1 1 1])
+% 
+% 
+% plotData = [plot_1dim_drug,plot_1dim_nodrug,plot_2dim_drug,plot_2dim_nodrug];
+% histScale = max([plotData.maxHist]);
+% 
+% subplot(2,1,1);
+% PlotSpikeHistogram([plot_1dim_nodrug, plot_1dim_drug],xLimits,histScale);
+% subplot(2,1,2);
+% PlotSpikeHistogram([plot_2dim_nodrug, plot_2dim_drug],xLimits,histScale);
+
+%% alex plot
 xLimits = [-1000 1000];
- 
-figure('color',[1 1 1])
-%subplot(2,1,2);
-
-plotData = [plotDataA1,plotDataB1,plotDataA2,plotDataB2];
-histScale = max([plotData.maxHist]);
-PlotSpikeHistogram(plotData,xLimits,histScale);
-
-data=plotDataA1.yHistogram;
-dataz = data/histScale;
+timeArray=(-1000:2000);
 
 
+histScale = 0.1; % max([plotData.maxHist]);
+
+pos=[0.01, 0.01, 0.85, 0.85];
+figName = 'Alex Plot';
+figure('color',[1 1 1],...
+        'Units', 'Normalized',...
+        'Position',pos,...
+        'NumberTitle', 'off',...
+        'PaperUnits', 'centimeters',...
+        'PaperType', 'A4',...
+        'PaperOrientation', 'landscape',...
+        'Name', figName,...
+        'PaperPosition', [0.0 0.0 29.305 20.65]...
+        );
+
+%%% align to stim onset    
+alignEvent = NLX_STIM_ON;
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+plotData{1} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+plotData{2} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+plotData{3} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+plotData{4} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+plotData{5} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+plotData{6} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+%%% align to cue on
+alignEvent = NLX_CUE_ON ;
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+plotData{7} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+plotData{8} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+plotData{9} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+plotData{10} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+plotData{11} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+plotData{12} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+%%% Align to first dimming
+alignEvent = NLX_DIMMING1;
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+plotData{13} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+plotData{14} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+plotData{15} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+plotData{16} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+plotData{17} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+plotData{18} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+
+maxOfHist =[];
+for i=1:18
+   maxOfHist = [maxOfHist, plotData{i}.maxHist];
+end
+histScale = max(maxOfHist);
+
+for i=1:18
+    if i<7
+        subplot(3,8,i);
+    elseif i<13
+        subplot(3,8,i+2);
+    elseif i<19;
+        subplot(3,8,i+4);
+    end
+    PlotSpikeHistogram(plotData{i},xLimits,histScale);
+end

@@ -32,7 +32,6 @@ for i=1:size(plotData,2)
     end
     
 % plot the histogram
-    %histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
     histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
     
     plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
@@ -49,7 +48,7 @@ for i=1:size(plotData,2)
     y2 = [yPlot;yPlot+1;yNaNs]; 
     B = reshape(y2,1,[]) + spikeShift;
     
-    spikeShift = spikeShift + max(yPlot) + 10;
+    spikeShift = spikeShift + max(max(yPlot)) + 10; 
   
     line(A,B,'Color',spikeColor); % plot spikes
 end
