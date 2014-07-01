@@ -21,8 +21,10 @@ CELL_NUMBER = 4;
 
 % Read the NLX event file and cut out the part related to our experiment
 [automaticEvents,manualEvents] = NLX_ReadEventFile(eventFilename);
-manualStartEvent = 'grcjdru1.517 on';
-manualStopEvent = 'grcjdru1.517 off';
+
+[manualStartEvent,manualStopEvent] = GetStartStopEvents(cortexFilename,manualEvents);
+% manualStartEvent = 'grcjdru1.517 on';
+% manualStopEvent = 'grcjdru1.517 off';
 [cutEventfile] = NLX_CutEventfile(automaticEvents,manualEvents,manualStartEvent,manualStopEvent);
 clear manualStartEvent manualStopEvent manualEvents automaticEvents
 
@@ -42,17 +44,10 @@ clear spikeArray isSelectedCell
 % read the cortex file and align the data
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
 ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
-
 ctxData = GetCtxReactionTime(ctxData);
-
-clear ctxDataTemp CELL_NUMBER
-
-
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
-clear dividedSpikeArray dividedEventfile ctxData
+clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp CELL_NUMBER
 
-%[trialData] = Extract_CTX_TrialParm_Grcjdru1(cortex_event_arr);
- % some function to align the data and make sure it is aligned correctly
 
 %% select what to Analyze (this is the overall selection )
 
@@ -79,7 +74,7 @@ clear isError isCorrect targetDim validTrials allData
 % NLX_TRIAL_START      = 255;    
 % NLX_RECORD_START     =   2;    
 % NLX_SUBJECT_START    =   4;    
- NLX_STIM_ON          =   8;    
+% NLX_STIM_ON          =   8;    
 % NLX_STIM_OFF         =  16;    
 % NLX_SUBJECT_END      =  32;    
 % NLX_RECORD_END       =  64;   
@@ -88,13 +83,13 @@ clear isError isCorrect targetDim validTrials allData
 % NLX_TESTDIMMED       =  17;
 % NLX_DISTDIMMED       =  18;
 % NLX_BARRELEASED      =  19;
- NLX_CUE_ON           =  20;
+%  NLX_CUE_ON           =  20;
 % NLX_CUE_OFF          =  21;
 % NLX_DIST1DIMMED      =  22;
 % NLX_DIST2DIMMED      =  23;
 % NLX_SACCADE_START    =  24;
-NLX_DIMMING1	       =  25; 	 	
-NLX_DIMMING2	       =  26;	
+% NLX_DIMMING1	       =  25; 	 	
+% NLX_DIMMING2	       =  26;	
 % NLX_DIMMING3         =  27;
 % NLX_MICRO_STIM	   =  28;
 % NLX_FIXSPOT_OFF	   =  29;
@@ -148,9 +143,11 @@ NLX_DIMMING2	       =  26;
 %% alex plot
 xLimits = [-1000 1000];
 timeArray=(-1000:2000);
+ NLX_STIM_ON           =   8;    
+ NLX_CUE_ON            =  20;
+ NLX_DIMMING1	       =  25; 	 	
+ %NLX_DIMMING2	       =  26;
 
-
-histScale = 0.1; % max([plotData.maxHist]);
 
 pos=[0.01, 0.01, 0.85, 0.85];
 figName = 'Alex Plot';
@@ -230,7 +227,7 @@ plotData{18} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
 
 maxOfHist =[];
 for i=1:18
-   maxOfHist = [maxOfHist, plotData{i}.maxHist];
+   maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
 end
 histScale = max(maxOfHist);
 

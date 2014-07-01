@@ -1,11 +1,14 @@
 function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
-% 
+% Reads the spikeFileName and tries to find the event and ctx file. This 
+% only works if the files are stored in a consistent way.
+%
+% input:
+%  spikeFileName: This file name has to start with the ctxFileName
+%
+% Output:
+%  eventFilename: name and path of the neuralynx event file
+%  ctxFileName: name and path of the cortex data file
 
-
-
-
-
-spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE';
 
 
 [pathstr,name,ext] = fileparts(spikeFileName); 

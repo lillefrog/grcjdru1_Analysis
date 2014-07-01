@@ -1,17 +1,17 @@
 function [ctxDataOut] = CleanCtxGrcjdru1Events(ctxData)
-% reads the ctx data file from CTX_Read2Struct and cleans it up assuming
+% Reads the ctx data file from CTX_Read2Struct and cleans it up assuming
 % that the data is from a GrcjDru1 experiment. It returns the structure
 % with a lot more information speficic to the grcjdru1 experiment
 %
-% input:
-% ctxData from CTX_Read2Struct
+% Input:
+%  ctxData from CTX_Read2Struct
 %
-% output:
+% Output:
 %  same but with the header removed from the ctx events and a lot of new
 %  fields contaning information about the trial.
 %
-% requires:
-% Extract_CTX_TrialParm_Grcjdru1
+% Requires:
+%  Extract_CTX_TrialParm_Grcjdru1
 
 ctxDataOut=ctxData;
 for i = 1:length(ctxData);

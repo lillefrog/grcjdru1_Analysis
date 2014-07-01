@@ -1,13 +1,13 @@
 function plotData = GrcjDru1Histogram(data,timeArray,alignEvent)
-% specialist function for plotting drug vs no drug plots. this is just a
-% wrapper for the more basic CalculateSpikeHistogram
+% Specialist function for plotting drug vs no drug plots. this is just a
+% wrapper for the more basic CalculateSpikeHistogram.
 %
-% input:
+% Input:
 %  data = data from the AlignCtxAndNlxData function.
 %  timearray = the array we vant ot calculate histograms over.
 %  alignEvent = The nlx event we want to align the spikes to.
 %
-% output:
+% Output:
 %  plotData = data for sending to the PlotSpikeHistogram function
 
 DataDrug   = data(  [data.drug]' );
