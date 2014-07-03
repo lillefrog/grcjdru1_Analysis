@@ -1,4 +1,4 @@
-function [rateData,nrSpikes] = CalculateSpikeRate(xData,timeRange,alignEvent)
+function [rateData] = CalculateSpikeRate(xData,timeRange,alignEvent)
 % function for calculating spike rates from trial data, 
 %
 % [rateData,nrSpikes] = CalculateSpikeRate(xData,timeRange,alignEvent)
@@ -37,6 +37,10 @@ for i=1:length(xData)
 end
 
 duration = timeRange(2) - timeRange(1);
+
+rateData.data = nrSpikes;
+rateData.duration = duration;
+
 rateData.meanSpikeNr = mean(nrSpikes);
 rateData.stdSpikeNr = std(nrSpikes);
 rateData.maxSpikeNr = max(nrSpikes);
