@@ -16,4 +16,7 @@ DataNoDrug = data( ~[data.drug]' );
 [plot_DataDrug] = CalculateSpikeHistogram(DataDrug,timeArray,alignEvent);
 [plot_DataNoDrug] = CalculateSpikeHistogram(DataNoDrug,timeArray,alignEvent);
 
+plot_DataDrug.name = 'drug';
+plot_DataNoDrug.name = 'no drug';
+
 plotData = [plot_DataDrug, plot_DataNoDrug];

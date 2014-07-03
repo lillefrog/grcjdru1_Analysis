@@ -1,5 +1,5 @@
 function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,spikeShift)
-% Plots histogram data from CalculateSpikeHistogram as a rasta plot and
+% Plots histogram data from CalculateSpikeHistogram as a raster plot and
 % histogram.
 %
 % Input
@@ -13,7 +13,7 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,spikeShift)
 %   should always be 100.
 
 if nargin<4 
-    spikeShift = 100;
+    spikeShift = 100; 
 end
 
 % initialize
@@ -31,12 +31,11 @@ for i=1:size(plotData,2)
       histLineWidth = 1;
     end
     
-% plot the histogram
+ % plot the histogram
     histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
-    
     plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
-    
-% plot the spike data
+
+ % plot the spike data
     % reorganize the spike data to line coordinates
     xPlot = plotData(i).xSpikes;
     xNaNs = nan(size(xPlot));
@@ -48,9 +47,13 @@ for i=1:size(plotData,2)
     y2 = [yPlot;yPlot+1;yNaNs]; 
     B = reshape(y2,1,[]) + spikeShift;
     
-    spikeShift = spikeShift + max(max(yPlot)) + 10; 
+    spikeShift = spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
   
-    line(A,B,'Color',spikeColor); % plot spikes
+    raster_handle = line(A,B,'Color',spikeColor); % plot spikes
+    % don't show a legend for the rasters
+%     hAnnotation = get(raster_handle,'Annotation');
+%     hLegendEntry = get(hAnnotation','LegendInformation');
+%     set(hLegendEntry,'IconDisplayStyle','off');
 end
     
 % I'm not sure if this scale actually means anything

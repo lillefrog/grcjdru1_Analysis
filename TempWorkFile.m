@@ -23,8 +23,6 @@ CELL_NUMBER = 4;
 [automaticEvents,manualEvents] = NLX_ReadEventFile(eventFilename);
 
 [manualStartEvent,manualStopEvent] = GetStartStopEvents(cortexFilename,manualEvents);
-% manualStartEvent = 'grcjdru1.517 on';
-% manualStopEvent = 'grcjdru1.517 off';
 [cutEventfile] = NLX_CutEventfile(automaticEvents,manualEvents,manualStartEvent,manualStopEvent);
 clear manualStartEvent manualStopEvent manualEvents automaticEvents
 
@@ -127,117 +125,144 @@ clear isError isCorrect targetDim validTrials allData
 % clear selectRough selectA selectB timeArray DataA DataA
   
 %% small plot the data
-% xLimits = [-1000 1000];
-%  
-% figure('color',[1 1 1])
-% 
-% 
-% plotData = [plot_1dim_drug,plot_1dim_nodrug,plot_2dim_drug,plot_2dim_nodrug];
-% histScale = max([plotData.maxHist]);
-% 
-% subplot(2,1,1);
-% PlotSpikeHistogram([plot_1dim_nodrug, plot_1dim_drug],xLimits,histScale);
-% subplot(2,1,2);
-% PlotSpikeHistogram([plot_2dim_nodrug, plot_2dim_drug],xLimits,histScale);
 
-%% alex plot
+clear selectData plotData rateData
 xLimits = [-1000 1000];
-timeArray=(-1000:2000);
- NLX_STIM_ON           =   8;    
- NLX_CUE_ON            =  20;
- NLX_DIMMING1	       =  25; 	 	
- %NLX_DIMMING2	       =  26;
+NLX_DIMMING1	       =  25;  
 
-
-pos=[0.01, 0.01, 0.85, 0.85];
-figName = 'Alex Plot';
-figure('color',[1 1 1],...
-        'Units', 'Normalized',...
-        'Position',pos,...
-        'NumberTitle', 'off',...
-        'PaperUnits', 'centimeters',...
-        'PaperType', 'A4',...
-        'PaperOrientation', 'landscape',...
-        'Name', figName,...
-        'PaperPosition', [0.0 0.0 29.305 20.65]...
-        );
-
-%%% align to stim onset    
-alignEvent = NLX_STIM_ON;
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
-plotData{1} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
-plotData{2} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
-plotData{3} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
-plotData{4} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
-plotData{5} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
-plotData{6} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-%%% align to cue on
-alignEvent = NLX_CUE_ON ;
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
-plotData{7} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
-plotData{8} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
-plotData{9} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
-plotData{10} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
-plotData{11} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
-plotData{12} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-%%% Align to first dimming
+figure('color',[1 1 1])
 alignEvent = NLX_DIMMING1;
 
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
-plotData{13} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+selectData = [validData.targetDim]'==1 & [validData.attend]'==1  ; 
+plotData{1} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+rateData{1} = CalculateSpikeRate(validData(selectData),[0,500],alignEvent);
 
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
-plotData{14} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+selectData = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
+plotData{2} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+rateData{2} = CalculateSpikeRate(validData(selectData),[0,500],alignEvent);
 
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
-plotData{15} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+selectData = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+plotData{3} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+rateData{3} = CalculateSpikeRate(validData(selectData),[0,500],alignEvent);
 
-selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
-plotData{16} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
-plotData{17} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
-
-selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
-plotData{18} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
 
 maxOfHist =[];
-for i=1:18
+for i=1:length(plotData)
    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+   disp(rateData{i}.meanSpikeRate);
 end
 histScale = max(maxOfHist);
 
-for i=1:18
-    if i<7
-        subplot(3,8,i);
-    elseif i<13
-        subplot(3,8,i+2);
-    elseif i<19;
-        subplot(3,8,i+4);
-    end
-    PlotSpikeHistogram(plotData{i},xLimits,histScale);
-end
+subplot(3,1,1);
+title('Attend in');
+
+PlotSpikeHistogram(plotData{1},xLimits,histScale);
+subplot(3,1,2);
+title('Attend out1');
+PlotSpikeHistogram(plotData{2},xLimits,histScale);   
+subplot(3,1,3);
+title('Attend out2');
+PlotSpikeHistogram(plotData{3},xLimits,histScale);
+
+
+%% alex plot
+% xLimits = [-1000 1000];
+% timeArray=(-1000:2000);
+%  NLX_STIM_ON           =   8;    
+%  NLX_CUE_ON            =  20;
+%  NLX_DIMMING1	       =  25; 	 	
+%  %NLX_DIMMING2	       =  26;
+% 
+% 
+% pos=[0.01, 0.01, 0.85, 0.85];
+% figName = 'Alex Plot';
+% figure('color',[1 1 1],...
+%         'Units', 'Normalized',...
+%         'Position',pos,...
+%         'NumberTitle', 'off',...
+%         'PaperUnits', 'centimeters',...
+%         'PaperType', 'A4',...
+%         'PaperOrientation', 'landscape',...
+%         'Name', figName,...
+%         'PaperPosition', [0.0 0.0 29.305 20.65]...
+%         );
+% 
+% %%% align to stim onset    
+% alignEvent = NLX_STIM_ON;
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+% plotData{1} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+% plotData{2} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+% plotData{3} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+% plotData{4} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+% plotData{5} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+% plotData{6} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% %%% align to cue on
+% alignEvent = NLX_CUE_ON ;
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+% plotData{7} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+% plotData{8} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+% plotData{9} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+% plotData{10} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+% plotData{11} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+% plotData{12} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% %%% Align to first dimming
+% alignEvent = NLX_DIMMING1;
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==1 ; 
+% plotData{13} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==1 ; 
+% plotData{14} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==1 ; 
+% plotData{15} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.stimDirection]'==-1 ; 
+% plotData{16} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.stimDirection]'==-1 ; 
+% plotData{17} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% selectData = [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.stimDirection]'==-1 ; 
+% plotData{18} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
+% 
+% maxOfHist =[];
+% for i=1:18
+%    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+% end
+% histScale = max(maxOfHist);
+% 
+% for i=1:18
+%     if i<7
+%         subplot(3,8,i);
+%     elseif i<13
+%         subplot(3,8,i+2);
+%     elseif i<19;
+%         subplot(3,8,i+4);
+%     end
+%     PlotSpikeHistogram(plotData{i},xLimits,histScale);
+% end
