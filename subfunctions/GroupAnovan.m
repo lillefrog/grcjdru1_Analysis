@@ -1,5 +1,5 @@
-function [p,table,stats,terms] = GroupAnovan(dataStructure,dataName,groupNames)
-% wrappwe for anovan that takes structs as input instead of the insane
+function [p,table,stats,terms] = GroupAnovan(dataStructure,dataName,groupNames,varargin)
+% wrapper for anovan that takes structs as input instead of the insane
 % format it usually requires
 %
 % Input:
@@ -8,6 +8,7 @@ function [p,table,stats,terms] = GroupAnovan(dataStructure,dataName,groupNames)
 %       can be one value or a array of data.
 %   groupNames = cell array with the names of the fields used as groups
 %       this is also used as headlines.
+%   varargin = any extra inputs are sent directly to anovan
 %
 % Output:
 %   same as anovan
@@ -15,9 +16,14 @@ function [p,table,stats,terms] = GroupAnovan(dataStructure,dataName,groupNames)
 % Requirements:
 %   anovan
 
-
+% initialize
 dataArray = [];
 bigArray = cell(0,0);
+
+% go trough each cell in the data structure and extract the data. For each
+% data point we also extract the field value for each data group we want to
+% include in the analysis. This will crash if dataName and groupNames does
+% not correspond excatly to field values in the dataStructure
 for i=1:length(dataStructure)
     data = dataStructure{i}.(dataName); % first input must contain the data
     dataL = length(data);
@@ -34,10 +40,13 @@ for i=1:length(dataStructure)
     dataArray = [dataArray, data];
 end
 
+% Fiddle with the arrays so they fit anovan's sick prefrences
 bigArray = bigArray';
+groupings = cell(1,groupNamesL); % initialize
 for i=1:groupNamesL
   groupings{i} = bigArray(:,i);
 end
 
-anovan(dataArray',groupings,'varnames',names);
+% do the anova 
+[p,table,stats,terms] = anovan(dataArray',groupings,'varnames',groupNames,varargin{:});
 
