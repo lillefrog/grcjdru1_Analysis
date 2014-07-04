@@ -6,10 +6,14 @@ function [data] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 %   selectedCell = the selectedCell number you want to use
 %
 % Output:
-%
+%   data = data structure contaning all kinds of nice stuff
 %
 % Requirements:
 %   All functions in grcjdru1_Analysis folder
+
+SHOWPLOTS = true; % set this to false if you just want the data without graphs
+
+
 
  if nargin<1 || isempty(spikeFileName) || ~exist(spikeFileName,'file');
     [fileName,filePath] = uigetfile('*.*','open a spike data file','MultiSelect','off'); 
@@ -17,11 +21,11 @@ function [data] = Analyze_GrcjDru1(spikeFileName,selectedCell)
  end
 %%
  
-disp('WARNING TESTING TESTING TESTING');
-spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE'
-selectedCell = 4
-nargin = 2;
-disp('WARNING TESTING TESTING TESTING');
+% disp('WARNING TESTING TESTING TESTING');
+% spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE'
+% selectedCell = 4
+% nargin = 2;
+% disp('WARNING TESTING TESTING TESTING');
 
 [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
 
@@ -73,8 +77,6 @@ clear selectData plotData rateData
 xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
 analyzeTimeRange = [0,500];
-
-
 alignEvent = NLX_DIMMING1;
 
 % select the data and get the spike counts
@@ -102,60 +104,43 @@ attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 &
 [out2NoDrug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
 out2NoDrug.drug = 0; out2NoDrug.attend = 3;
 
+% combine all the data for the anova
+combinedData = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 
-XX = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
+if SHOWPLOTS
+    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend'},'model','full');
+else
+    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend'},'model','full','display','off');
+end
 
-
-L = length(inDataDrug);
-ID = cell(2,L);
-ID(1,:) = {'Drug'};
-ID(2,:) = {'In1'};
-
-L = length(inData);
-I = cell(2,L);
-I(1,:) = {'noDrug'};
-I(2,:) = {'In1'};
-
-L = length(out1DataDrug);
-O1D = cell(2,L);
-O1D(1,:) = {'Drug'};
-O1D(2,:) = {'Out1'};
-
-L = length(out1Data);
-O1 = cell(2,L);
-O1(1,:) = {'noDrug'};
-O1(2,:) = {'Out1'};
-
-X = [inDataDrug,inData,out1DataDrug,out1Data]';
-Y = [ID,I,O1D,O1]';
-Z{1} = Y(:,1)
-Z{2} = Y(:,2)
-
-anovan(X,Z);
-
-%data = rateData;
+data.p = p;
+data.table = table;
 
 %%  plot data
 
-selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
-selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
-selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+if SHOWPLOTS
 
-figure('color',[1 1 1]);
-timeArray=(-1000:2000);
-maxOfHist =[];
-for i=1:length(selectData)
-   plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,alignEvent); %#ok<AGROW>
-   maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+ selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
+ selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
+ selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+
+ figure('color',[1 1 1]);
+ timeArray=(-1000:2000);
+ maxOfHist =[];
+ for i=1:length(selectData)
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,alignEvent); %#ok<AGROW>
+    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+ end
+ histScale = max(maxOfHist);
+
+ subplot(3,1,1);
+ title('Attend in');
+ PlotSpikeHistogram(plotData{1},xLimits,histScale);
+ subplot(3,1,2);
+ title('Attend out1');
+ PlotSpikeHistogram(plotData{2},xLimits,histScale);   
+ subplot(3,1,3);
+ title('Attend out2');
+ PlotSpikeHistogram(plotData{3},xLimits,histScale);
+
 end
-histScale = max(maxOfHist);
-
-subplot(3,1,1);
-title('Attend in');
-PlotSpikeHistogram(plotData{1},xLimits,histScale);
-subplot(3,1,2);
-title('Attend out1');
-PlotSpikeHistogram(plotData{2},xLimits,histScale);   
-subplot(3,1,3);
-title('Attend out2');
-PlotSpikeHistogram(plotData{3},xLimits,histScale);
