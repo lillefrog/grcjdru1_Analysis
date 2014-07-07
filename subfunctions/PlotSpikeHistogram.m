@@ -21,14 +21,14 @@ figHandle = gcf;
 hold on
 
 for i=1:size(plotData,2)    
-    if (mod(i,2) == 0)
-      histColor = [0 0 0];
-      spikeColor = [0 0 0];
-      histLineWidth = 2;
-    else
+    if ~(mod(i,2) == 0) % 1,3,5
       histColor = [0.3 0.3 0.3];
       spikeColor = [0.3 0.3 0.3];
       histLineWidth = 1;
+    else
+      histColor = [0 0 0];
+      spikeColor = [0 0 0];
+      histLineWidth = 2;
     end
     
  % plot the histogram

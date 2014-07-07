@@ -60,7 +60,7 @@ clear spikeArray isSelectedCell
 ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
 ctxData = GetCtxReactionTime(ctxData);
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
-clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp selectedCell
+clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
 % select what to Analyze (this is the overall selection )
 
@@ -69,48 +69,85 @@ isCorrect   = [allData.correctTrial]'; % did the monkey compleate the task
 validTrials = ((isCorrect) & (~isError));  % Find trials that are correct, has no errors, and dim 1 or 2
 validData   = allData(validTrials);
 
-clear isError isCorrect targetDim validTrials allData
+
+data.spikeFileName = spikeFileName;
+data.eventFilename = eventFilename;
+data.cortexFilename = cortexFilename;
+data.cell = selectedCell; 
+clear isError isCorrect targetDim validTrials allData selectedCell
 
 %% select the data
 
 clear selectData plotData rateData
 xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
-analyzeTimeRange = [0,500];
+NLX_DIMMING2 =  26;
+
+analyzeTimeRange = [0,200]; % jones fastest reaction time is 216ms
 alignEvent = NLX_DIMMING1;
 
 % select the data and get the spike counts
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1 );
 [inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
-inDrug.drug = 1; inDrug.attend = 1;
+inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 1;
 
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
 [inNoDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
-inNoDrug.drug = 0; inNoDrug.attend = 1;
+inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 1;
 
 attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==1 );
 [out1Drug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
-out1Drug.drug = 1; out1Drug.attend = 2;
+out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 1;
 
 attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==0 );
 [out1NoDrug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
-out1NoDrug.drug = 0; out1NoDrug.attend = 2;
+out1NoDrug.drug = 0; out1NoDrug.attend = 2; out1NoDrug.dim = 1;
 
 attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==1 );
 [out2Drug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
-out2Drug.drug = 1; out2Drug.attend = 3;
+out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 1;
 
 attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==0 );
 [out2NoDrug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
-out2NoDrug.drug = 0; out2NoDrug.attend = 3;
+out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 1;
+
+combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
+
+% second dimming
+alignEvent = NLX_DIMMING2;
+attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==1 );
+[inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 2;
+
+attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==0 );
+[inNoDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 2;
+
+attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==1 );
+[out1Drug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 2;
+
+attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==0 );
+[out1NoDrug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+out1NoDrug.drug = 0; out1NoDrug.attend = 2;  out1NoDrug.dim = 2;
+
+attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==1 );
+[out2Drug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 2;
+
+attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==0 );
+[out2NoDrug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 2;
+
+combinedDataDim2 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 
 % combine all the data for the anova
-combinedData = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
+combinedData = [combinedDataDim1,combinedDataDim2];%{inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug}; 
 
 if SHOWPLOTS
-    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend'},'model','full');
+    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend','dim'},'model','full');
 else
-    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend'},'model','full','display','off');
+    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend','dim'},'model','full','display','off');
 end
 
 data.p = p;
@@ -118,14 +155,18 @@ data.table = table;
 
 %%  plot data
 
-if SHOWPLOTS
-
+if SHOWPLOTS == false
+  alignEvent = NLX_DIMMING1;  
+   timeArray=(-1000:2000);  
+    
+ [~,fName,~] = fileparts(data.spikeFileName);
+ figTitle = [fName,' cell=',num2str(data.cell)];
+    
  selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
  selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
  selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+ figure('color',[1 1 1],'position', [100,100,900,700]);
 
- figure('color',[1 1 1]);
- timeArray=(-1000:2000);
  maxOfHist =[];
  for i=1:length(selectData)
     plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,alignEvent); %#ok<AGROW>
@@ -142,5 +183,69 @@ if SHOWPLOTS
  subplot(3,1,3);
  title('Attend out2');
  PlotSpikeHistogram(plotData{3},xLimits,histScale);
+
+% plot title 
+axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
+
+end
+
+%%  plot data
+
+if SHOWPLOTS
+ 
+   timeArray=(-1000:2000);  
+    
+ [~,fName,~] = fileparts(data.spikeFileName);
+ figTitle = [fName,' cell=',num2str(data.cell)];
+    
+ selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
+ selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
+ selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+ 
+ selectData{4} = [validData.targetDim]'==2 & [validData.attend]'==1  ;
+ selectData{5} = [validData.targetDim]'==2 & [validData.attend]'==2  ; 
+ selectData{6} = [validData.targetDim]'==2 & [validData.attend]'==3  ; 
+ 
+
+
+ maxOfHist =[];
+ for i=1:3
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_DIMMING1); %#ok<AGROW>
+    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+ end
+ 
+  for i=4:6
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_DIMMING2); %#ok<AGROW>
+    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+ end
+ 
+ histScale = max(maxOfHist);
+ 
+ 
+ figure('color',[1 1 1],'position', [100,100,900,700]);
+ subplot(3,2,1);
+ title('Attend in');
+ PlotSpikeHistogram(plotData{1},xLimits,histScale);
+ subplot(3,2,3);
+ title('Attend out1');
+ PlotSpikeHistogram(plotData{2},xLimits,histScale);   
+ subplot(3,2,5);
+ title('Attend out2');
+ PlotSpikeHistogram(plotData{3},xLimits,histScale);
+ 
+  subplot(3,2,2);
+ title('Attend in');
+ PlotSpikeHistogram(plotData{4},xLimits,histScale);
+ subplot(3,2,4);
+ title('Attend out1');
+ PlotSpikeHistogram(plotData{5},xLimits,histScale);   
+ subplot(3,2,6);
+ title('Attend out2');
+ PlotSpikeHistogram(plotData{6},xLimits,histScale);
+
+% plot title 
+axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
 
 end

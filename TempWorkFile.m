@@ -12,8 +12,6 @@ addpath(genpath('E:\doc\GitHub\grcjdru1_Analysis\'));
 spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE';
 CELL_NUMBER = 4;
 
-[data] = Analyze_GrcjDru1(spikeFileName,CELL_NUMBER);
-
 [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
 
 %% Read the files and extract the data
@@ -268,3 +266,6 @@ PlotSpikeHistogram(plotData{3},xLimits,histScale);
 %     end
 %     PlotSpikeHistogram(plotData{i},xLimits,histScale);
 % end
+
+
+bar([1,2,3],'bar_color',)

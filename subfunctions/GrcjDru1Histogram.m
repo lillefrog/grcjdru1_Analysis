@@ -19,4 +19,4 @@ DataNoDrug = data( ~[data.drug]' );
 plot_DataDrug.name = 'drug';
 plot_DataNoDrug.name = 'no drug';
 
-plotData = [plot_DataDrug, plot_DataNoDrug];
+plotData = [plot_DataNoDrug, plot_DataDrug];
