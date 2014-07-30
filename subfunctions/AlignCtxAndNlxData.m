@@ -5,7 +5,7 @@ function data = AlignCtxAndNlxData(spikeArray,nlxEventfile,ctxData)
 
 
 nrTrials = length(ctxData);
-
+endTime = 0;
 
 for trial =1:nrTrials
     % check that we are not reading outside the NLX file and stop if we do
@@ -22,6 +22,14 @@ for trial =1:nrTrials
     nlxEvents = nlxEventfile{trial}; 
     [nlxBlock,nlxCond,nlxEventNoHeader,nlxHeaderFound] = ReadNlxHeader(nlxEvents);
     ctxData(trial).nlxHeaderFound = nlxHeaderFound;
+    
+    % read the intertrial interval
+    startTime = nlxEvents(1,1);
+    interTrialInterval = (startTime - endTime) / 1000; % get in mS
+    %disp(interTrialInterval);
+    ctxData(trial).interTrialInterval = interTrialInterval;
+    endTime = nlxEvents(end,1); % get the end time for the next calculation
+    
     
     % cortex start counting from 0 and neuralynx from 1, since matlab also
     % likes to start from one I add one to the cortex values to align them.

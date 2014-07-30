@@ -12,6 +12,12 @@ addpath(genpath('E:\doc\GitHub\grcjdru1_Analysis\'));
 spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE';
 CELL_NUMBER = 4;
 
+spikeFileName = 'E:\JonesRawData\PEN324\NLX_control\2014-06-30_11-12-25\GRCJDRU1.525 on_GRCJDRU1.525 offSE17_cb.NSE';
+CELL_NUMBER = 2;
+
+spikeFileName = 'E:\JonesRawData\PEN222\NLX_control\2013-11-26_18-12-29\GRCJDRU1.384 ON_GRCJDRU1.384 OFFSE17_cb.NSE';
+CELL_NUMBER = 4;
+
 [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
 
 %% Read the files and extract the data
@@ -26,7 +32,7 @@ CELL_NUMBER = 4;
 [cutEventfile] = NLX_CutEventfile(automaticEvents,manualEvents,manualStartEvent,manualStopEvent);
 clear manualStartEvent manualStopEvent manualEvents automaticEvents
 
-% Split the event file up in trials
+% Split the NLX event file up in trials
 startTrialEvent = 255; 
 stopTrialEvent = 254;
 [dividedEventfile] = NLX_DivideEventfile(cutEventfile,startTrialEvent,stopTrialEvent);

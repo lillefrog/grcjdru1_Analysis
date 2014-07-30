@@ -1,4 +1,4 @@
-function [data] = Analyze_GrcjDru1(spikeFileName,selectedCell)
+function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 % read the data for the GrcjDru1 experiment
 %
 % Input:
@@ -6,7 +6,7 @@ function [data] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 %   selectedCell = the selectedCell number you want to use
 %
 % Output:
-%   data = data structure contaning all kinds of nice stuff
+%   resultData = data structure contaning all kinds of nice stuff
 %
 % Requirements:
 %   All functions in grcjdru1_Analysis folder
@@ -70,10 +70,11 @@ validTrials = ((isCorrect) & (~isError));  % Find trials that are correct, has n
 validData   = allData(validTrials);
 
 
-data.spikeFileName = spikeFileName;
-data.eventFilename = eventFilename;
-data.cortexFilename = cortexFilename;
-data.cell = selectedCell; 
+resultData.spikeFileName = spikeFileName;
+resultData.eventFilename = eventFilename;
+resultData.cortexFilename = cortexFilename;
+resultData.cell = selectedCell; 
+resultData.nValidTrials = sum(validTrials);
 clear isError isCorrect targetDim validTrials allData selectedCell
 
 %% select the data
@@ -150,8 +151,8 @@ else
     [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend','dim'},'model','full','display','off');
 end
 
-data.p = p;
-data.table = table;
+resultData.p = p;
+resultData.table = table;
 
 %%  plot data
 
@@ -159,8 +160,8 @@ if SHOWPLOTS == false
   alignEvent = NLX_DIMMING1;  
    timeArray=(-1000:2000);  
     
- [~,fName,~] = fileparts(data.spikeFileName);
- figTitle = [fName,' cell=',num2str(data.cell)];
+ [~,fName,~] = fileparts(resultData.spikeFileName);
+ figTitle = [fName,' cell=',num2str(resultData.cell)];
     
  selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
  selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
@@ -196,8 +197,8 @@ if SHOWPLOTS
  
    timeArray=(-1000:2000);  
     
- [~,fName,~] = fileparts(data.spikeFileName);
- figTitle = [fName,' cell=',num2str(data.cell)];
+ [~,fName,~] = fileparts(resultData.spikeFileName);
+ figTitle = [fName,' cell=',num2str(resultData.cell)];
     
  selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
  selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
