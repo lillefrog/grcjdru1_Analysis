@@ -14,18 +14,13 @@ function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 SHOWPLOTS = true; % set this to false if you just want the data without graphs
 
 
+%% Load data from files
 
+% Ask for the spike filename if it is not given
  if nargin<1 || isempty(spikeFileName) || ~exist(spikeFileName,'file');
     [fileName,filePath] = uigetfile('*.*','open a spike data file','MultiSelect','off'); 
     spikeFileName = fullfile(filePath,fileName);
  end
-%%
- 
-% disp('WARNING TESTING TESTING TESTING');
-% spikeFileName = 'E:\JonesRawData\PEN312\NLX_control\2014-06-07_07-24-14\GRCJDRU1.517 ON_GRCJDRU1.517 OFFSE17_cb.NSE'
-% selectedCell = 4
-% nargin = 2;
-% disp('WARNING TESTING TESTING TESTING');
 
 [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
 
@@ -48,12 +43,16 @@ maxCellNumber = max(spikeArray(:,2));
 if nargin<2 || isempty(selectedCell); % if selectedCell is not defined
   x = inputdlg(['Enter cell number between 1 and ',num2str(maxCellNumber),' : '],...
              'Cell number missing', [1 50]);
-  selectedCell = str2num(x{1});    
+  selectedCell = str2num(x{1});     %#ok<ST2NM>
 end
 isSelectedCell = (spikeArray(:,2)==selectedCell);
 spikeArray = spikeArray(isSelectedCell,:);
 dividedSpikeArray = NLX_DivideSpikeArray(spikeArray,dividedEventfile);
 clear spikeArray isSelectedCell
+
+% Get the Spike Width
+spkWidth = SpikeWidth(spikeFileName, selectedCell, SHOWPLOTS);
+resultData.spkWidth = spkWidth;
 
 % read the cortex file and align the data
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
@@ -62,7 +61,7 @@ ctxData = GetCtxReactionTime(ctxData);
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
-% select what to Analyze (this is the overall selection )
+%% select what to Analyze (this is the overall selection )
 
 isError     = [allData.error]';  % did the program find any errors 
 isCorrect   = [allData.correctTrial]'; % did the monkey compleate the task
@@ -79,6 +78,8 @@ clear isError isCorrect targetDim validTrials allData selectedCell
 
 %% select the data
 
+% Add calculate Fano Factor
+
 clear selectData plotData rateData
 xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
@@ -88,6 +89,7 @@ analyzeTimeRange = [0,200]; % jones fastest reaction time is 216ms
 alignEvent = NLX_DIMMING1;
 
 % select the data and get the spike counts
+% first dimming
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1 );
 [inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
 inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 1;
@@ -114,6 +116,7 @@ out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 1;
 
 combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 
+% select the data and get the spike counts
 % second dimming
 alignEvent = NLX_DIMMING2;
 attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==1 );
@@ -224,7 +227,7 @@ if SHOWPLOTS
  histScale = max(maxOfHist);
  
  
- figure('color',[1 1 1],'position', [100,100,900,700]);
+ figure('color',[1 1 1],'position', [100,0,900,700]);
  subplot(3,2,1);
  title('Attend in');
  PlotSpikeHistogram(plotData{1},xLimits,histScale);
