@@ -2,7 +2,7 @@ function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
 % Reads the spikeFileName and tries to find the event and ctx file. This 
 % only works if the files are stored in a consistent way.
 %
-% input:
+% Input:
 %  spikeFileName: This file name has to start with the ctxFileName
 %
 % Output:
@@ -11,7 +11,7 @@ function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
 
 
 
-[pathstr,name,ext] = fileparts(spikeFileName); 
+[pathstr,name,~] = fileparts(spikeFileName); 
 
 % event files have a very consistent name and position
 eventFilename = [pathstr,'\Events.Nev'];
