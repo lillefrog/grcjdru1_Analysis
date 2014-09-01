@@ -1,6 +1,6 @@
 
-addpath(genpath('E:\doc\GitHub\NeuralynxAnalysis\'));
-addpath(genpath('E:\doc\GitHub\grcjdru1_Analysis\'));
+%addpath(genpath('E:\doc\GitHub\NeuralynxAnalysis\'));
+%addpath(genpath('E:\doc\GitHub\grcjdru1_Analysis\'));
 
 
 %% Select the file to use
@@ -133,11 +133,12 @@ clear isError isCorrect targetDim validTrials allData
 %% small plot the data
 
 clear selectData plotData rateData
-xLimits = [-1000 1000];
+xLimits = [-1000 1000];  % start and stop time rel. to align event
 NLX_DIMMING1	       =  25;  
 
-figure('color',[1 1 1])
-alignEvent = NLX_DIMMING1;
+figure('color',[1 1 1]); 
+alignEvent = NLX_DIMMING1;  % define the align event 
+
 
 selectData = [validData.targetDim]'==1 & [validData.attend]'==1  ; 
 plotData{1} = GrcjDru1Histogram(validData(selectData),timeArray,alignEvent);
@@ -153,7 +154,7 @@ rateData{3} = CalculateSpikeRate(validData(selectData),[0,500],alignEvent);
 
 
 maxOfHist =[];
-for i=1:length(plotData)
+for i=1:length(plotData) % Find the total max and use that to scale raster plots
    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
    disp(rateData{i}.meanSpikeRate);
 end
