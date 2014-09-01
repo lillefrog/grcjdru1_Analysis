@@ -20,6 +20,11 @@ function [rateData] = CalculateSpikeRate(xData,timeRange,alignEvent)
 %
 % Requirements:
 %   none
+
+% TODO 
+% Add calculation of Fano Factor
+
+
 nrSpikes = zeros(1,length(xData));
 
 for i=1:length(xData)
