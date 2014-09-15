@@ -11,6 +11,7 @@ function [StartEvent,StopEvent] = GetStartStopEvents(cortexFilename,manualEvents
 % letter in the event file
 currEvents = lower(manualEvents(:,3));
 ctxName = lower([name,ext]);
+ctxName = deblank(ctxName); % remowe trailing whitespace
 
 % check if the on or off keyword already exist in the ctxName if this is
 % true it will return too many events but it will still work so we only
