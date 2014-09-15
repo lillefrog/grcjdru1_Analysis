@@ -2,7 +2,7 @@ function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 % read the data for the GrcjDru1 experiment
 %
 % Input:
-%   spikeFileName = Name of the sorted spike file
+%   spikeFileName = Name of the sorted spike filed
 %   selectedCell = the selectedCell number you want to use
 %
 % Output:
@@ -65,9 +65,13 @@ clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
 isError     = [allData.error]';  % did the program find any errors 
 isCorrect   = [allData.correctTrial]'; % did the monkey compleate the task
-validTrials = ((isCorrect) & (~isError));  % Find trials that are correct, has no errors, and dim 1 or 2
+hasSpikes    = [allData.hasSpikes]'; % is there any spikes at all
+validTrials = ((isCorrect) & (~isError) & (hasSpikes) );  % Find trials that are correct, has no errors, and has spikes
 validData   = allData(validTrials);
 
+%TODO
+% find the first trial with spikes in and the last trial with spikes in
+% and exclude everything outside that
 
 resultData.spikeFileName = spikeFileName;
 resultData.eventFilename = eventFilename;
@@ -85,6 +89,26 @@ xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
 NLX_DIMMING2 =  26;
 
+
+%% Calculate fanofactor
+analyzeTimeRange = [-500,500]; % jones fastest reaction time is 216ms
+alignEvent = NLX_DIMMING1;
+
+% in data
+attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
+[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+resultData.fanoFactorIn = inNoDrugFF.fanoFactor;
+
+disp('ISI');
+disp(inNoDrugFF.interspikeInterval);
+resultData.interspikeInterval = inNoDrugFF.interspikeInterval;
+
+% Out data
+attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
+[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+resultData.fanoFactorOut = outNoDrugFF.fanoFactor;
+
+%% My analysis
 analyzeTimeRange = [0,200]; % jones fastest reaction time is 216ms
 alignEvent = NLX_DIMMING1;
 
