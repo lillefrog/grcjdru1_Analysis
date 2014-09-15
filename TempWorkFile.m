@@ -276,3 +276,27 @@ PlotSpikeHistogram(plotData{3},xLimits,histScale);
 
 
 bar([1,2,3],'bar_color',)
+
+
+%% stuff
+
+spikeFileName ='E:\JonesRawData\PEN262\NLX_control\2014-02-26_12-34-01\GRCJDRU1.438 ON_GRCJDRU1.438 OFFSE17_cb3.NSE';
+selectedCell =3;
+
+
+for i=1:length(validData)-1
+    x(i) = length(validData(i).nlxSpikes);
+end
+
+x=x'
+
+
+nTrials = 50; % number of trials
+nSpikes = 1000; % number of spikes
+SS = 5000; % sum of squares of spikecount
+
+iterations = 10000;
+h = hist(ceil(rand(nSpikes,iterations)*nTrials),1:nTrials);
+SSS = sum(h.*h); % sum of squares Simulated
+pvalue = (sum(SSS<=SS)+1)/(iterations+1);
+
