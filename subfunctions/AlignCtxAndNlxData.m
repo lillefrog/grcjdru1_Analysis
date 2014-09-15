@@ -26,10 +26,12 @@ for trial =1:nrTrials
     % read the intertrial interval
     startTime = nlxEvents(1,1);
     interTrialInterval = (startTime - endTime) / 1000; % get in mS
-    %disp(interTrialInterval);
     ctxData(trial).interTrialInterval = interTrialInterval;
     endTime = nlxEvents(end,1); % get the end time for the next calculation
     
+    % Check if there are any spikes at all, if not we are probalbly outside
+    % the area selected in the spike-sorting
+    ctxData(trial).hasSpikes = ~isempty(spikeArray{trial});
     
     % cortex start counting from 0 and neuralynx from 1, since matlab also
     % likes to start from one I add one to the cortex values to align them.
