@@ -28,7 +28,7 @@ function [rateData] = CalculateFanoFactor(xData,timeRange,alignEvent)
 nrSpikes = zeros(1,length(xData));
 totalInterSpikeTime = 0; % sum of all interspike intervals
 nInterSpike = 0; % number of interspike intervals
-ffWindow = [-100 100];
+ffWindow = [-200 200];
 spikeBinArr = zeros(length(timeRange(1):timeRange(2)),length(xData));
 
 for i=1:length(xData)

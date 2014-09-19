@@ -11,7 +11,7 @@ function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 % Requirements:
 %   All functions in grcjdru1_Analysis folder
 
-SHOWPLOTS = true; % set this to false if you just want the data without graphs
+SHOWPLOTS = false; % set this to false if you just want the data without graphs
 
 
 %% Load data from files
@@ -38,7 +38,7 @@ clear startTrialEvent stopTrialEvent cutEventfile
 
 
 % Read the NSE spike file
-[spikeArray] = NLX_ReadNSEFileShort(spikeFileName);
+[spikeArray] = NLX_ReadNSEFile(spikeFileName);
 maxCellNumber = max(spikeArray(:,2));
 if nargin<2 || isempty(selectedCell); % if selectedCell is not defined
   x = inputdlg(['Enter cell number between 1 and ',num2str(maxCellNumber),' : '],...
@@ -88,25 +88,49 @@ clear selectData plotData rateData
 xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
 NLX_DIMMING2 =  26;
+CUE_ON       =  20;
+STIM_ON      =   8;
 
 
 %% Calculate fanofactor
-analyzeTimeRange = [-500,500]; % jones fastest reaction time is 216ms
+analyzeTimeRange = [-1000,1000]; % jones fastest reaction time is 216ms
 alignEvent = NLX_DIMMING1;
 
 % in data
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
 [inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
-resultData.fanoFactorIn = inNoDrugFF.fanoFactor;
-
-disp('ISI');
-disp(inNoDrugFF.interspikeInterval);
-resultData.interspikeInterval = inNoDrugFF.interspikeInterval;
+resultData.dim1.fanoFactorIn = inNoDrugFF.fanoFactor;
 
 % Out data
 attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
 [outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
-resultData.fanoFactorOut = outNoDrugFF.fanoFactor;
+resultData.dim1.fanoFactorOut = outNoDrugFF.fanoFactor;
+
+alignEvent = CUE_ON;
+
+% in data
+attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
+[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+resultData.cue.fanoFactorIn = inNoDrugFF.fanoFactor;
+
+% Out data
+attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
+[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+resultData.cue.fanoFactorOut = outNoDrugFF.fanoFactor;
+
+alignEvent = STIM_ON;
+
+% in data
+attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
+[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+resultData.stim.fanoFactorIn = inNoDrugFF.fanoFactor;
+
+% Out data
+attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
+[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+resultData.stim.fanoFactorOut = outNoDrugFF.fanoFactor;
+
+
 
 %% My analysis
 analyzeTimeRange = [0,200]; % jones fastest reaction time is 216ms
