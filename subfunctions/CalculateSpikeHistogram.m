@@ -16,9 +16,14 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 % plotData.ySpikes = y coordinates for spikes
 % plotData.xHistogram = x coordinates for Histogram (same as timeArray);
 % plotData.yHistogram = y coordinates for Histogram
+% plotData.xCue = x coordinates for all cue events
+% plotData.yCue = y coordinates for all cue events
+%
 % The histogram values are probably not scaled correctly!
 
 SLOW = true;
+CUE_ON =  20;
+NLX_RECORD_END = 64;
 
 % konstants used for fitting the histogram
 sigma = 10;
@@ -29,6 +34,8 @@ k2 = 2*sigma^2;
 spikesSmooth = zeros(length(xData),length(timeArray));
 xPlot = [];
 yPlot = [];
+xCueArray = [];
+yCueArray = [];
 yValue = 0;
 
 
@@ -52,10 +59,20 @@ for i=1:length(xData)
         spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
        end
         
+        % calclulate position of cue 
+        cueEventPos = find(events(:,2) == CUE_ON,1,'last'); % find the event to align the spikes to   
+        if ~isempty(cueEventPos)
+            cueTime = (events(cueEventPos,1) - alignTime) / 1000; % time of the cue compared to the align event in ms
+            xCueArray = [xCueArray,cueTime];
+            yCueArray = [yCueArray,yValue];
+        end
+        
         % This part generates the coordinates for plotting the spikes
         xPlot = [xPlot, spikes'];  %#ok<AGROW>
         yPlot = [yPlot, ones(size(spikes'))*yValue]; %#ok<AGROW> % 
         yValue = yValue+1;
+        
+
     end
 end
 
@@ -66,3 +83,7 @@ plotData.ySpikes = yPlot;
 plotData.xHistogram = timeArray;
 plotData.yHistogram = mean(spikesSmooth);
 plotData.maxHist = max(mean(spikesSmooth));
+plotData.xCue = xCueArray;
+plotData.yCue = yCueArray;
+
+
