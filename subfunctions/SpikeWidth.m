@@ -12,7 +12,8 @@ function spkWidth = SpikeWidth(spikeFileName, cell, showFigure)
 %  spkWidth.peakTroughVar : variation in delays
 
 
-
+% todo
+% add the ability to set inversion for the spikes
 
 %% define Variables
 
@@ -33,7 +34,7 @@ SAMPLERATE = 32556; %samples/sec
 %% Analyze the data
 
 
- avarageDelays=zeros(1,1);
+ %avarageDelays=zeros(1,1);
 
 
 %%
@@ -49,7 +50,7 @@ compactFrequencyOfDelay = zeros(length(timeline),1);
 
 %% analyze the data for all spikes
     invert_flag=1;
-    while avarageDelays<50
+%     while avarageDelays<50
         SpikeArrayBig = Samples(:,1,cellNumbers(:)== cell);             % Extract all spikes for cell ==1
         if ~isempty(SpikeArrayBig) % check that it is not empty
             Amp = Features(1,cellNumbers(:)==cell) - Features(2,cellNumbers(:)==cell);    % get the full amplitude of the spike
@@ -60,7 +61,9 @@ compactFrequencyOfDelay = zeros(length(timeline),1);
 
             
             spikesInterpolated = spline(orginalSamples,NormalizedSpikeArray',newSamples)'; % interpolate spikes with spline
-            spikesInterpolated=spikesInterpolated*invert_flag; % invert spikes if nessary
+            
+            
+            spikesInterpolated = spikesInterpolated*invert_flag; % invert spikes if nessary
 
             % calculate histogram
             DelaysOfMinimum = bsxfun(@eq,spikesInterpolated,min(spikesInterpolated(7*6:end,:)));
@@ -73,12 +76,19 @@ compactFrequencyOfDelay = zeros(length(timeline),1);
             CompactRealDelays = sum(RealDelays,1);
             CleanRealDelays = CompactRealDelays(CompactRealDelays ~= (timeline(end)));  % remove data that don't have a K dip
             avarageDelays = median(CleanRealDelays);
-            if avarageDelays<50
-                invert_flag=-1;
-            end
+%             if avarageDelays<50
+%                 invert_flag=-1;
+%             end
             variationInDelays = iqr(CleanRealDelays); % inter quartile range
             spkWidth.peakTroughVar = variationInDelays;
             spkWidth.peakTrough = avarageDelays;
+            
+            if plotIt
+                figure('color',[1 1 1],'position', [100,100,800,500]);
+                plot(timeline,spikesInterpolated(:,1:30)); % ,timelineOrg,NormalizedSpikeArray(:,1),'+'
+                xlabel('Time in ySec');
+                ylabel('Normalized amplitude');   
+            end
   
         else
             disp(['no spikes found in cell ',num2str(cell)]);
@@ -86,14 +96,9 @@ compactFrequencyOfDelay = zeros(length(timeline),1);
             spkWidth.peakTrough = avarageDelays;
             variationInDelays = [];
             spkWidth.peakTroughVar = variationInDelays;
-            break
+            error(['no spikes found in cell ',num2str(cell)]);
         end
-    end
+%     end
     
-if plotIt
-    figure('color',[1 1 1],'position', [100,100,800,500]);
-    plot(timeline,spikesInterpolated(:,1:30)); % ,timelineOrg,NormalizedSpikeArray(:,1),'+'
-    xlabel('Time in ySec');
-    ylabel('Normalized amplitude');   
-end
+
     
