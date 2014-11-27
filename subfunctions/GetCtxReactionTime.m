@@ -23,8 +23,8 @@ for i=1:length(ctxData)
     currEventArray = ctxData(i).eventArray;
 
     dimmEvent = currEventArray(:,2)==TEST_DIMMED;
+    dimmTime = currEventArray(dimmEvent,1);    
     responseEvent = currEventArray(:,2)==BAR_RELEASE_ON_TEST;
-    dimmTime = currEventArray(dimmEvent,1);
     responseTime = currEventArray(responseEvent,1);
     
     eppStartEvent = find(currEventArray(:,2)==START_EYE_DATA,1,'first');
