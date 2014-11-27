@@ -14,6 +14,8 @@ function [ctxDataOut] = CleanCtxGrcjdru1Events(ctxData)
 %  Extract_CTX_TrialParm_Grcjdru1
 
 ctxDataOut=ctxData;
+drugOld = 0; % Drug in previous trial used for calculating
+
 for i = 1:length(ctxData);
     
  eventsOnly = ctxData(i).eventArray;
