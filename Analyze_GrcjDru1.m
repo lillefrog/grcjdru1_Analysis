@@ -11,7 +11,7 @@ function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
 % Requirements:
 %   All functions in grcjdru1_Analysis folder
 
-SHOWPLOTS = false; % set this to false if you just want the data without graphs
+SHOWPLOTS = true; % set this to false if you just want the data without graphs
 
 
 %% Load data from files
@@ -90,6 +90,9 @@ NLX_DIMMING1 =  25;
 NLX_DIMMING2 =  26;
 CUE_ON       =  20;
 STIM_ON      =   8;
+BAR_RELEASED = 104;
+
+%alignEvent = BAR_RELEASED;
 
 
 %% Calculate fanofactor
@@ -167,6 +170,7 @@ combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 % select the data and get the spike counts
 % second dimming
 alignEvent = NLX_DIMMING2;
+
 attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==1 );
 [inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
 inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 2;
@@ -207,9 +211,9 @@ resultData.table = table;
 
 %%  plot data
 
-if SHOWPLOTS == false
-  alignEvent = NLX_DIMMING1;  
-   timeArray=(-1000:2000);  
+if SHOWPLOTS
+  alignEvent = NLX_DIMMING1;
+  timeArray=(-1000:2000);  
     
  [~,fName,~] = fileparts(resultData.spikeFileName);
  figTitle = [fName,' cell=',num2str(resultData.cell)];
@@ -242,7 +246,7 @@ text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none');
 
 end
 
-%%  plot data
+%%  plot data after first and second dimming
 
 if SHOWPLOTS
  
@@ -277,7 +281,7 @@ if SHOWPLOTS
  
  figure('color',[1 1 1],'position', [100,0,900,700]);
  subplot(3,2,1);
- title('Attend in');
+ title('Attend in (dim1)');
  PlotSpikeHistogram(plotData{1},xLimits,histScale);
  subplot(3,2,3);
  title('Attend out1');
@@ -287,7 +291,7 @@ if SHOWPLOTS
  PlotSpikeHistogram(plotData{3},xLimits,histScale);
  
   subplot(3,2,2);
- title('Attend in');
+ title('Attend in (dim2)');
  PlotSpikeHistogram(plotData{4},xLimits,histScale);
  subplot(3,2,4);
  title('Attend out1');
