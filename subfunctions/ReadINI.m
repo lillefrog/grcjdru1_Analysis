@@ -1,8 +1,8 @@
 function values = ReadINI(fName)
 % reads and INI file and returs a structure contaning all values. The
 % function is quite basic and has very little error handling.
-% comments start with ; or # and has to be on a seperate line not at the end of a line
-% a line that starts with [ is a section head and must have a ] somewhere
+% comments start with ; or # and has to be on a seperate line not at the end of a line.
+% A line that starts with [ is a section head and must have a ] somewhere
 % any line that is not a comment or section must be a key and contain a =
 
 section = 'default'; % if there is no section name this will be used
