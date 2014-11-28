@@ -14,12 +14,13 @@ function [ctxDataOut] = CleanCtxGrcjdru1Events(ctxData)
 %  Extract_CTX_TrialParm_Grcjdru1
 
 ctxDataOut=ctxData;
-drugOld = 0; % Drug in previous trial used for calculating
+drugOld = 0; % Drug in previous trial used for calculating how long the drug has been applied
+drugChangeCount = 1000; % counts how many trials have passed since the drug was changed 
 
 for i = 1:length(ctxData);
     
  eventsOnly = ctxData(i).eventArray;
- [trialData,newEvents] = Extract_CTX_TrialParm_Grcjdru1(eventsOnly);
+ [trialData,newEvents] = Extract_CTX_TrialParm_Saccp3(eventsOnly);
 
  if ~trialData.error
     % cortex events
@@ -53,6 +54,12 @@ for i = 1:length(ctxData);
     ctxDataOut(i).drug            = trialData.drug;
     ctxDataOut(i).attend          = trialData.attend;
     ctxDataOut(i).error           = trialData.error;
+    if (drugOld ~= trialData.drug)
+        drugChangeCount = 0;
+    else
+        drugChangeCount = drugChangeCount+1;
+    end
+    ctxDataOut(i).drugChangeCount = drugChangeCount;
  else 
     ctxDataOut(i).error           = trialData.error; 
  end
