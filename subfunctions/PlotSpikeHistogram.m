@@ -5,11 +5,11 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,spikeShift)
 % Input
 %   plotData: structure or array of structure that contains the data to plot. 
 %   if it contains an array the histograms will be plottet on top of each other 
-%   but the spikes will be shifte to avoid overlap
+%   but the spikes will be shifted to avoid overlap
 %   xlimits: The limits on the x axis
 %   histScale: The maximum possible value for the histogram, it is used to
 %   scale the histograms.
-%   spikeShift is optional and sets where to start plotting the spikes. I
+%   spikeShift is optional and sets where to start plotting the spikes. It
 %   should always be 100.
 
 if nargin<4 
