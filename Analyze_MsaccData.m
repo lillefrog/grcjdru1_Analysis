@@ -40,7 +40,8 @@ dividedSpikeArray = NLX_DivideSpikeArray(spikeArray,dividedEventfile);
 clear spikeArray isSelectedCell
 
 % Get the Spike Width
-spkWidth = SpikeWidth(spikeFileName, selectedCell, SHOWPLOTS);
+spkWidth = SpikeWidth(spikeFileName, selectedCell, false);
+resultData.Cell=selectedCell;
 resultData.spkWidth = spkWidth;
 
 % read the cortex file and align the data
@@ -69,53 +70,78 @@ clear isCorrect validTrials allData
 
 %% Analysis 
 
-xLimits = [-1000 1000]; % range around align point to plot
-
-% possible align points
-FIXATION_OCCURS  =  8;
-START_PRE_TRIAL  = 15; 
-END_PRE_TRIAL    = 16;
-START_POST_TRIAL = 17; 
-TURN_FIXSPOT_ON  = 35; 
-TURN_FIXSPOT_OFF = 36;
-REWARD         =   3;
-REWARD_GIVEN   =  96;
-START_EYE_DATA = 100;
-END_EYE_DATA   = 101;
-STIM_ON	      = 4001;
-FIXSPOT_OFF	  = 4010;
-SACCADE_ONSET = 5006;
-
 
 %% NLX events
 
-NLX_TRIAL_START    =  255;    
-NLX_RECORD_START   =   2;    
-NLX_SUBJECT_START  =   4;    
-NLX_STIM_ON        =   8;   
-NLX_EVENT_3        =   11;
-NLX_STIM_OFF       =   16;
-NLX_SACCADE_START  =   24;
-NLX_FIXSPOT_OFF	   =   29;
-NLX_SUBJECT_END    =   32;    
-NLX_RECORD_END     =   64; 
-NLX_READ_DATA      =  128;
-NLX_TRIAL_END      =  254;
+% NLX_TRIAL_START  
+% NLX_RECORD_START  
+% NLX_SUBJECT_START 
+% NLX_STIM_ON       
+% NLX_EVENT_3    
+% NLX_STIM_OFF 
+% NLX_SACCADE_START 
+% NLX_FIXSPOT_OFF	  
+% NLX_SUBJECT_END    
+% NLX_RECORD_END    
+% NLX_READ_DATA        
+% NLX_TRIAL_END      
 
  
 %%
 
-alignEvent = NLX_SACCADE_START;
-timeArray=(-1000:2000);
+AlignString = 'NLX_STIM_ON';
+%AlignString = 'NLX_SACCADE_START';
+%AlignString = 'NLX_TRIAL_START';
+alignEvent = NLX_event2num(AlignString);
 
-i=1;
- 
- selectData = [validData.condition]'==0;
- 
- xData = validData(selectData);
- plotData{i} = CalculateSpikeHistogram(validData(selectData),timeArray,alignEvent);
- 
- PlotSpikeHistogram(plotData,xLimits,plotData.maxHist);
+timeArray=(-1000:2000); % range to calculate data in
+xLimits = [-1000 2000]; % range around align point to plot
+subPlotWidth = 0.20;
+subPlotHight = 0.17;
+nrDirections = 9;
+figureTitle = 'Aligned to Stimulus onset';
+
+% initialize the figure
+mainFig = figure('color',[1 1 1],'position', [100,100,900,900]);
+maxHist =0; % initialize scale factor for histograms
+plotData = cell(nrDirections,1);
+posSubplot = cell(nrDirections,1);
+hold on
+
+% calculate the histograms for all directions
+for i=1:nrDirections
+ tempData = validData([validData.condition]'==(i-1));
+ positionTarget = tempData.positionTarget;
+ plotData{i} = CalculateSpikeHistogram(tempData,timeArray,alignEvent);
+ maxHist = max([plotData{i}.maxHist maxHist]); % get the max amplitude of the histogram for scaling
+ scaleFactor = 2.7*sqrt(positionTarget(1)^2+positionTarget(2)^2);
+ posSubplot{i} = [0.5+(positionTarget/scaleFactor)-[subPlotWidth/2 subPlotHight/2] subPlotWidth subPlotHight];
+end
+
+
+% plot the histograms for all directions
+for i=1:nrDirections
+ subplot('position',posSubplot{i}); % Make a subplot at a definded position
+ PlotSpikeHistogram(plotData{i},xLimits,maxHist); % plot the histogram to the subplot
+ set(gca,'color','none'); % remowe the background from subplots so they can be closer together
+ if i>1
+ set(gca,'YTicklabel','');
+ set(gca,'XTicklabel','');
+ end
+end
+
+% spiff up the main figure
+figure(mainFig);
+[~, name, ext] = fileparts(resultData.cortexFilename);
+figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString];
+
+axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+text(0.5, 0.97,figureTitle,'VerticalAlignment', 'top','HorizontalAlignment', 'center','Interpreter', 'none'); % print title
+line([0.5 0.5],[0.49 0.51],'Color','k'); % draw the cross in the middle
+line([0.49 0.51],[0.5 0.5],'Color','k'); % draw the cross in the middle
+
+
+hold off
  
  
  
