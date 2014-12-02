@@ -54,6 +54,13 @@ for i=1:length(xData)
             sp1 = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); 
             spikesSmooth(i,:) = spikesSmooth(i,:) + sp1;
         end
+
+%         parfor j=1:length(spikes) % making it parallel adds too much overhead
+%             sp1(j,:) = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); 
+%         end
+%         spikesSmooth(i,:) = sum(sp1);
+%         clear 'sp1'
+        
        else % faster version of the interpolation (not that much faster)
         spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
         spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
