@@ -57,6 +57,11 @@ for i=1:size(plotData,2)
 end
     
 % I'm not sure if this scale actually means anything
-set(gca,'YTick',[0 100],'YTicklabel',[0 round(histScale*1000)]);
+%set(gca,'YTick',[0 100],'YTicklabel',[0 round(histScale*1000)],'ticklength',[0.02 0.02]);
+set(gca,'YTick',[0 100]); % show only 2 yTick marks one at 0 and one at 100
+set(gca,'YTicklabel',[0 round(histScale*1000)]);
+set(gca,'ticklength',[0.02 0.02]);
+set(gca,'color','none'); % remowe the background from subplots so they can be closer together (still can't overlap
+
 xlim(xLimits);
 hold off
