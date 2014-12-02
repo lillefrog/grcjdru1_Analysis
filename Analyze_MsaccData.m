@@ -1,4 +1,4 @@
-function [allData] = Analyze_MsaccData(spikeFileName,selectedCell)
+function [outData] = Analyze_MsaccData(spikeFileName,selectedCell)
 
 % Ask for the spike filename if it is not given
  if nargin<1 || isempty(spikeFileName) || ~exist(spikeFileName,'file');
@@ -68,8 +68,6 @@ resultData.cell = selectedCell;
 resultData.nValidTrials = sum(validTrials);
 clear isCorrect validTrials allData
 
-%% Analysis 
-
 
 %% NLX events
 
@@ -94,6 +92,7 @@ AlignString = 'NLX_STIM_ON';
 %AlignString = 'NLX_TRIAL_START';
 alignEvent = NLX_event2num(AlignString);
 
+
 timeArray=(-1000:2000); % range to calculate data in
 xLimits = [-1000 2000]; % range around align point to plot
 subPlotWidth = 0.20;
@@ -116,32 +115,47 @@ for i=1:nrDirections
  maxHist = max([plotData{i}.maxHist maxHist]); % get the max amplitude of the histogram for scaling
  scaleFactor = 2.7*sqrt(positionTarget(1)^2+positionTarget(2)^2);
  posSubplot{i} = [0.5+(positionTarget/scaleFactor)-[subPlotWidth/2 subPlotHight/2] subPlotWidth subPlotHight];
+ 
+ StimOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_STIM_ON'));
+ SaccOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_SACCADE_START'));
+ pos(i,:) = positionTarget;
+ StimOn(i) = StimOnData.meanSpikeRate;
+ SaccOn(i) = SaccOnData.meanSpikeRate;
 end
+
+
+
 
 
 % plot the histograms for all directions
 for i=1:nrDirections
  subplot('position',posSubplot{i}); % Make a subplot at a definded position
  PlotSpikeHistogram(plotData{i},xLimits,maxHist); % plot the histogram to the subplot
- set(gca,'color','none'); % remowe the background from subplots so they can be closer together
- if i>1
- set(gca,'YTicklabel','');
- set(gca,'XTicklabel','');
+ if i>1 % for all non RF plots
+ set(gca,'YTicklabel',''); % remowe YTick lable
+ set(gca,'XTicklabel',''); % remowe XTick lable
  end
 end
 
+
+
 % spiff up the main figure
-figure(mainFig);
-[~, name, ext] = fileparts(resultData.cortexFilename);
+figure(mainFig); % select the figur
+[~, name, ext] = fileparts(resultData.cortexFilename); % get filename for title
 figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString];
 
-axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
+axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off'); % make invisible axis
+PlotPolarData(SaccOn,pos,[.2 .2 1]);
+%PlotPolarData(StimOn,pos,[1 .2 .2]);
+
 text(0.5, 0.97,figureTitle,'VerticalAlignment', 'top','HorizontalAlignment', 'center','Interpreter', 'none'); % print title
 line([0.5 0.5],[0.49 0.51],'Color','k'); % draw the cross in the middle
 line([0.49 0.51],[0.5 0.5],'Color','k'); % draw the cross in the middle
 
 
 hold off
+
+outData = 1;
  
  
  
