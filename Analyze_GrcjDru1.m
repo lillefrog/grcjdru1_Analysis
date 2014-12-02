@@ -142,27 +142,27 @@ alignEvent = NLX_DIMMING1;
 % select the data and get the spike counts
 % first dimming
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1 );
-[inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+[inDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 1;
 
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-[inNoDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+[inNoDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 1;
 
 attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==1 );
-[out1Drug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+[out1Drug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
 out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 1;
 
 attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==0 );
-[out1NoDrug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+[out1NoDrug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
 out1NoDrug.drug = 0; out1NoDrug.attend = 2; out1NoDrug.dim = 1;
 
 attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==1 );
-[out2Drug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+[out2Drug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
 out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 1;
 
 attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==0 );
-[out2NoDrug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+[out2NoDrug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
 out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 1;
 
 combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
@@ -172,27 +172,27 @@ combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 alignEvent = NLX_DIMMING2;
 
 attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==1 );
-[inDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+[inDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 2;
 
 attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==0 );
-[inNoDrug] = CalculateSpikeRate(attendInData,analyzeTimeRange,alignEvent);
+[inNoDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 2;
 
 attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==1 );
-[out1Drug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+[out1Drug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
 out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 2;
 
 attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==0 );
-[out1NoDrug] = CalculateSpikeRate(attendOut1Data,analyzeTimeRange,alignEvent);
+[out1NoDrug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
 out1NoDrug.drug = 0; out1NoDrug.attend = 2;  out1NoDrug.dim = 2;
 
 attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==1 );
-[out2Drug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+[out2Drug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
 out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 2;
 
 attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==0 );
-[out2NoDrug] = CalculateSpikeRate(attendOut2Data,analyzeTimeRange,alignEvent);
+[out2NoDrug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
 out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 2;
 
 combinedDataDim2 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
@@ -201,9 +201,9 @@ combinedDataDim2 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 combinedData = [combinedDataDim1,combinedDataDim2];%{inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug}; 
 
 if SHOWPLOTS
-    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend','dim'},'model','full');
+    [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full');
 else
-    [p,table,stats,terms] = GroupAnovan(combinedData,'data',{'drug','attend','dim'},'model','full','display','off');
+    [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full','display','off');
 end
 
 resultData.p = p;
