@@ -71,10 +71,7 @@ FF(spikeVarArr==0) = 1;  % if there are no spikes the variance is 0 and the resu
 
 duration = timeRange(2) - timeRange(1);
 
-rateData.fanoFactorArr = FF;
-rateData.fanoFactor = var(nrSpikes)/mean(nrSpikes);
-rateData.interspikeInterval = totalInterSpikeTime/nInterSpike; % this estimate will be too low since it is loosing very long intervals
-rateData.nrSpikes = nrSpikes;
+rateData.nrSpikes = nrSpikes; % must be first
 rateData.duration = duration;
 
 rateData.meanSpikeNr = mean(nrSpikes);
@@ -87,6 +84,10 @@ rateData.meanSpikeRate = rateData.meanSpikeNr/durationInSec;
 rateData.stdSpikeRate  = rateData.stdSpikeNr /durationInSec;
 rateData.maxSpikeRate  = rateData.maxSpikeNr /durationInSec;
 rateData.minSpikeRate  = rateData.minSpikeNr /durationInSec;
+
+rateData.fanoFactorArr = FF;
+rateData.fanoFactor = var(nrSpikes)/mean(nrSpikes);
+rateData.interspikeInterval = totalInterSpikeTime/nInterSpike; % this estimate will be too low since it is loosing very long intervals
 
 function [binnedSpikes] = BinSpikes(spikes,window,interval)
 % This function counts the number of spikes in a timewindow (window) that
