@@ -20,7 +20,7 @@ drugChangeCount = 1000; % counts how many trials have passed since the drug was 
 for i = 1:length(ctxData);
     
  eventsOnly = ctxData(i).eventArray;
- [trialData,newEvents] = Extract_CTX_TrialParm_Saccp3(eventsOnly);
+ [trialData,newEvents] = Extract_CTX_TrialParm_Grcjdru1(eventsOnly);
 
  if ~trialData.error
     % cortex events
