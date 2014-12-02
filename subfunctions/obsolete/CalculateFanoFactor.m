@@ -21,7 +21,7 @@ function [rateData] = CalculateFanoFactor(xData,timeRange,alignEvent)
 % Requirements:
 %   none
 
-disp('This function is replaced by CalculateSpikeData');
+disp('CalculateFanoFactor is replaced by CalculateSpikeData');
 
 
 nrSpikes = zeros(1,length(xData));
