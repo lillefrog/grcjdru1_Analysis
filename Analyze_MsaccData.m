@@ -98,7 +98,6 @@ xLimits = [-1000 2000]; % range around align point to plot
 subPlotWidth = 0.20;
 subPlotHight = 0.17;
 nrDirections = 9;
-figureTitle = 'Aligned to Stimulus onset';
 
 % initialize the figure
 mainFig = figure('color',[1 1 1],'position', [100,100,900,900]);
@@ -118,44 +117,51 @@ for i=1:nrDirections
  
  StimOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_STIM_ON'));
  SaccOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_SACCADE_START'));
- pos(i,:) = positionTarget;
- StimOn(i) = StimOnData.meanSpikeRate;
- SaccOn(i) = SaccOnData.meanSpikeRate;
+ pos(i,:) = positionTarget;         %#ok<AGROW>
+ StimOn{i} = StimOnData.nrSpikes;   %#ok<AGROW>
+ SaccOn{i} = SaccOnData.nrSpikes;   %#ok<AGROW>
 end
 
 
 
+if SHOWPLOTS
+    % plot the histograms for all directions
+    for i=1:nrDirections
+        subplot('position',posSubplot{i}); % Make a subplot at a definded position
+        PlotSpikeHistogram(plotData{i},xLimits,maxHist); % plot the histogram to the subplot
+        if i>1 % for all non RF plots
+        set(gca,'YTicklabel',''); % remowe YTick lable
+        set(gca,'XTicklabel',''); % remowe XTick lable
+        end
+    end
 
+    % spiff up the main figure
+    figure(mainFig); % select the figur
+    [~, name, ext] = fileparts(resultData.cortexFilename); % get filename for title
+    figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString];
+    axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off'); % make invisible axis
 
-% plot the histograms for all directions
-for i=1:nrDirections
- subplot('position',posSubplot{i}); % Make a subplot at a definded position
- PlotSpikeHistogram(plotData{i},xLimits,maxHist); % plot the histogram to the subplot
- if i>1 % for all non RF plots
- set(gca,'YTicklabel',''); % remowe YTick lable
- set(gca,'XTicklabel',''); % remowe XTick lable
- end
+    %text(0.5,0.35,'SaccadeOnset','Color',[.2 .2 1]);
+    %text(0.5,0.33,'StimOnset','Color',[1 .2 .2]);
+    text(0.5, 0.97,figureTitle,'VerticalAlignment', 'top','HorizontalAlignment', 'center','Interpreter', 'none'); % print title
+    line([0.5 0.5],[0.49 0.51],'Color','k'); % draw the cross in the middle
+    line([0.49 0.51],[0.5 0.5],'Color','k'); % draw the cross in the middle
 end
 
+% draw polar plots
+saccOnDirec = PlotPolarData(SaccOn,pos,[.2 .2 1],SHOWPLOTS);
+stimOnDirec = PlotPolarData(StimOn,pos,[1 .2 .2],SHOWPLOTS);
 
-
-% spiff up the main figure
-figure(mainFig); % select the figur
-[~, name, ext] = fileparts(resultData.cortexFilename); % get filename for title
-figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString];
-
-axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off'); % make invisible axis
-PlotPolarData(SaccOn,pos,[.2 .2 1]);
-%PlotPolarData(StimOn,pos,[1 .2 .2]);
-
-text(0.5, 0.97,figureTitle,'VerticalAlignment', 'top','HorizontalAlignment', 'center','Interpreter', 'none'); % print title
-line([0.5 0.5],[0.49 0.51],'Color','k'); % draw the cross in the middle
-line([0.49 0.51],[0.5 0.5],'Color','k'); % draw the cross in the middle
+if SHOWPLOTS
+    text(0.4,0.35, ['SaccadeOnset pVal: ',num2str(saccOnDirec.bootVlengthPval)], 'Color',[.2 .2 1]);
+    text(0.4,0.33, ['StimOnset    pVal: ',num2str(stimOnDirec.bootVlengthPval)], 'Color',[1 .2 .2]);
+end
 
 
 hold off
 
-outData = 1;
+outData.saccOnDirec = saccOnDirec;
+outData.stimOnDirec = stimOnDirec;
  
  
  
