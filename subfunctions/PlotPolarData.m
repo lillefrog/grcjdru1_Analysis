@@ -1,46 +1,147 @@
-function [d] = PlotPolarData(data,pos,figColor)
+function [d] = PlotPolarData(data,pos,figColor,SHOWPLOTS)
 % function for plotting a dataset in a polar plot. Is especially made for
-% plotting on top of other plots. 
-% It is not very generalized
+% plotting on top of other plots. It also calculates different statistics
+% for estimating weather there is a effect of direction.
+%
+% This function is not very generalized and will probably need modification
+% before it can be used in any other project
+%
+% input
+%  data = cell array, one cell for each position, containing an array of spikecounts
+%  pos = array of x and y coordinates for each position
+%  figColor = color for each plot f.eks. [.2 .2 .9]
+%  SHOWPLOTS = If true the plots are shown else only the calculations are done
+%
+% output
+%  .meanVector = the mean vector of spiking activity direction
+%  .vectorLength = the length of the vector (could easily be calculated from vector)
+%  .directonality = max(spikerate) / min(spikerate)
+%  .directonSignificans = anova pValue for effect of direction
 
 
 radius = 0.1; % radius of the mean circle
-nrDataPoints = size(data,2);
-normData = (data/mean(data))*radius; % normalize data to radius
+nrPositions = size(data,2); % positions
 
-x = 0.5;
-y = 0.5;
+% get the mean for each position
+for i=1:nrPositions
+    meanData(i) = mean(data{i}); %#ok<AGROW>
+end
+
+
+normData = (meanData/mean(meanData))*radius; % normalize data to radius
+
+% center of the plot
+centerX = 0.5;
+centerY = 0.5;
 
 
 hold on
 
-% plot circle
-ang=0:0.01:2*pi; 
-xp=radius*cos(ang);
-yp=radius*sin(ang);
-plot(x+xp,y+yp,'color',[.6 .6 .6]);
-clear 'xp' 'yp'
+if SHOWPLOTS
+    % plot circle
+    ang=0:0.01:2*pi; 
+    xp=radius*cos(ang);
+    yp=radius*sin(ang);
+    plot(centerX+xp,centerY+yp,'color',[.6 .6 .6]);
+    clear 'xp' 'yp'
+end
 
-% plot figure
-for i=1:nrDataPoints
+% Calculate the data for the polar plot
+for i=1:nrPositions
     sf = 1/sqrt(pos(i,1)^2+pos(i,2)^2); % calculate scale factor
     sf = sf*normData(i);
     xp(i)=pos(i,1)*sf;
     yp(i)=pos(i,2)*sf;
 end
+
+% check if there is a significant effect of direction (ANOVA)
+anovaData = []; % create a array for the anova
+anovaPositions = [];
+for i = 1:nrPositions
+    anovaData = [anovaData data{i}]; %#ok<AGROW>
+    tempPositions = linspace(i,i,length(data{i})) ;
+    anovaPositions = [anovaPositions tempPositions]; %#ok<AGROW>
+end
+[anovapValue,~,~] = anovan(anovaData,{anovaPositions},'display','off');
+
+
+% calculate and plot the average vector for the response
 xvect = sum(xp);
 yvect = sum(yp);
-xp(i+1)=xp(1);
-yp(i+1)=yp(1);
-plot(x+xp,y+yp,'-o','color',figColor);
-line([x x+xvect], [y y+yvect],'color',figColor,'marker','.');
+
+% Bootstrap the avarage vector and directionality index
+polarStats = calcPolarStats(anovaData,anovaPositions);
+myF = @(bootr)calcPolarStats(bootr,anovaPositions);
+iterations = 5000;
+
+bootStrapData = bootstrp(iterations,myF,anovaData);
 
 
-d.meanVector = [xvect yvect]*(1/radius);
-d.vectorLength = sqrt(xvect^2+yvect^2)*(1/radius);
-d.directonality = (max(data)/min(data));
+bootVlengthPval = sum(bootStrapData(:,1)>=polarStats(1))/iterations; % how many of the bootstrapped values are bigger than my vLength
+bootDirecPval = sum(bootStrapData(:,2)>=polarStats(2))/iterations; % how many of the bootstrapped values are bigger than my direction index
 
+% Plot figure
+if SHOWPLOTS
+    % plot the average vector
+    if (bootVlengthPval<0.05); lWidth = 2; else lWidth = 1; end
+    if (bootVlengthPval<0.01); lMark = '*'; else lMark = '.'; end
+    line([centerX centerX+xvect], [centerY centerY+yvect],'color',figColor,'marker',lMark,'linewidth',lWidth); 
 
+    % The polar plot
+    xp(i+1)=xp(1); % plot a line back to pos1
+    yp(i+1)=yp(1);
+    plot(centerX+xp,centerY+yp,'-o','color',figColor);
+end
 
 hold off
+
+% save data for the output
+d.meanVector = [xvect yvect]*(1/radius);
+d.vectorLength = sqrt(xvect^2+yvect^2)*(1/radius);
+d.directonality = (max(meanData)/min(meanData));
+d.directonSignificans = anovapValue;
+d.bootstrapVlength = polarStats(1);
+d.bootstrapDirec = polarStats(2);
+d.bootVlengthPval = bootVlengthPval;
+d.bootDirecPval = bootDirecPval;
+
+
+
+
+function stats = calcPolarStats(data,pos)
+% calculate stats for circular data
+% vector length and directonality
+
+nPositions = max(pos); % get the number of positions
+
+%data = data/mean(data); % normalize % too slow
+data = data / (sum(data)/length(data));  % normalize
+
+% initialize
+x=0;
+y=0;
+DD = zeros(nPositions,1);
+alphaStep = (2*pi)/nPositions;
+
+% michaels optimized C-like code
+runningTotals = zeros(nPositions,1);
+runningCounts = zeros(nPositions,1);
+for i=1:length(data)
+   runningTotals(pos(i)) = runningTotals(pos(i)) + data(i);
+   runningCounts(pos(i)) = runningCounts(pos(i)) + 1;
+end
+
+DD(:) = runningTotals(:) ./ runningCounts(:);
+
+for i=1:nPositions
+    %DD(i) = mean(data(pos==i));
+    alpha = alphaStep*i;
+    y = y + (DD(i) * sin(alpha));
+    x = x + (DD(i) * cos(alpha));
+end
+
+vLength = sqrt(x^2+y^2);
+direc = max(DD) / min(DD);
+
+stats = [vLength,direc];
 
