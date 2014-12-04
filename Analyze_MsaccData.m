@@ -73,7 +73,7 @@ clear isCorrect validTrials allData
 
 % NLX_TRIAL_START  
 % NLX_RECORD_START  
-% NLX_SUBJECT_START 
+% NLX_SUBJECT_START % fixation starts
 % NLX_STIM_ON       
 % NLX_EVENT_3    
 % NLX_STIM_OFF 
@@ -87,6 +87,7 @@ clear isCorrect validTrials allData
  
 %%
 
+%AlignString = 'NLX_SUBJECT_START'; % fixation
 AlignString = 'NLX_STIM_ON';
 %AlignString = 'NLX_SACCADE_START';
 %AlignString = 'NLX_TRIAL_START';
@@ -95,8 +96,8 @@ alignEvent = NLX_event2num(AlignString);
 
 timeArray=(-1000:2000); % range to calculate data in
 xLimits = [-1000 2000]; % range around align point to plot
-subPlotWidth = 0.20;
-subPlotHight = 0.17;
+subPlotWidth = 0.18;
+subPlotHight = 0.15;
 nrDirections = 9;
 
 % initialize the figure
