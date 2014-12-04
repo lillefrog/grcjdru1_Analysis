@@ -37,22 +37,18 @@ centerY = 0.5;
 
 hold on
 
-if SHOWPLOTS
-    % plot circle
-    ang=0:0.01:2*pi; 
-    xp=radius*cos(ang);
-    yp=radius*sin(ang);
-    plot(centerX+xp,centerY+yp,'color',[.6 .6 .6]);
-    clear 'xp' 'yp'
-end
-
 % Calculate the data for the polar plot
 for i=1:nrPositions
     sf = 1/sqrt(pos(i,1)^2+pos(i,2)^2); % calculate scale factor
     sf = sf*normData(i);
-    xp(i)=pos(i,1)*sf;
-    yp(i)=pos(i,2)*sf;
+    xPolar(i)=pos(i,1)*sf;
+    yPolar(i)=pos(i,2)*sf;
 end
+
+% calculate and plot the average vector for the polar plot
+xvect = sum(xPolar);
+yvect = sum(yPolar);
+
 
 % check if there is a significant effect of direction (ANOVA)
 anovaData = []; % create a array for the anova
@@ -65,35 +61,14 @@ end
 [anovapValue,~,~] = anovan(anovaData,{anovaPositions},'display','off');
 
 
-% calculate and plot the average vector for the response
-xvect = sum(xp);
-yvect = sum(yp);
-
 % Bootstrap the avarage vector and directionality index
 polarStats = calcPolarStats(anovaData,anovaPositions);
 myF = @(bootr)calcPolarStats(bootr,anovaPositions);
 iterations = 5000;
-
 bootStrapData = bootstrp(iterations,myF,anovaData);
-
-
 bootVlengthPval = sum(bootStrapData(:,1)>=polarStats(1))/iterations; % how many of the bootstrapped values are bigger than my vLength
 bootDirecPval = sum(bootStrapData(:,2)>=polarStats(2))/iterations; % how many of the bootstrapped values are bigger than my direction index
 
-% Plot figure
-if SHOWPLOTS
-    % plot the average vector
-    if (bootVlengthPval<0.05); lWidth = 2; else lWidth = 1; end
-    if (bootVlengthPval<0.01); lMark = '*'; else lMark = '.'; end
-    line([centerX centerX+xvect], [centerY centerY+yvect],'color',figColor,'marker',lMark,'linewidth',lWidth); 
-
-    % The polar plot
-    xp(i+1)=xp(1); % plot a line back to pos1
-    yp(i+1)=yp(1);
-    plot(centerX+xp,centerY+yp,'-o','color',figColor);
-end
-
-hold off
 
 % save data for the output
 d.meanVector = [xvect yvect]*(1/radius);
@@ -106,11 +81,44 @@ d.bootVlengthPval = bootVlengthPval;
 d.bootDirecPval = bootDirecPval;
 
 
+if SHOWPLOTS
+%     if d.vectorLength>2
+%         scf=0.5; % scale factor
+%     else
+        scf=0.6;
+%     end
+    
+    % plot circle
+    ang=0:0.01:2*pi; 
+    xCircle=radius*cos(ang)*scf;
+    yCircle=radius*sin(ang)*scf;
+    plot(centerX+xCircle,centerY+yCircle,'color',[.6 .6 .6]);
+    
+    % plot the average vector
+    if (bootVlengthPval<0.05); lWidth = 2; else lWidth = 1; end
+    if (bootVlengthPval<0.01); lMark = '*'; else lMark = '.'; end
+    line([centerX centerX+xvect*scf], [centerY centerY+yvect*scf],'color',figColor,'marker',lMark,'linewidth',lWidth); 
+
+    % The polar plot
+    xPolar(i+1)=xPolar(1); % plot a line back to pos1
+    yPolar(i+1)=yPolar(1);
+    plot(centerX+xPolar*scf,centerY+yPolar*scf,'-o','color',figColor);
+end
+
+hold off
+
+
+
+
 
 
 function stats = calcPolarStats(data,pos)
-% calculate stats for circular data
-% vector length and directonality
+% calculate stats for polar data:
+% vector length and directonality index
+%
+% it is a bit messy but because it runs within the bootstrap function it is
+% extreamly time critical and this is the fastest version we have been able
+% to come up with
 
 nPositions = max(pos); % get the number of positions
 
