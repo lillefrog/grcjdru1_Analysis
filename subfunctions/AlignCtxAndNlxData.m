@@ -1,7 +1,7 @@
 function data = AlignCtxAndNlxData(spikeArray,nlxEventfile,ctxData)
 % This function aligns the cortex and neuralynx data and combine them into
 % one data structure. I depends on the event codes in the data files so it
-% will only work on grcjDru1 files.
+% will only work on grcjDru1 files. Or files that share the same header.
 
 
 nrTrials = length(ctxData);
