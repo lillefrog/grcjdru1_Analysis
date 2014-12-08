@@ -1,4 +1,4 @@
-function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
+function [resultData] = Analyze_GrcjDru1B(spikeFileName,selectedCell)
 % read the data for the GrcjDru1 experiment
 %
 % Input:
@@ -84,7 +84,7 @@ clear isError isCorrect targetDim validTrials allData selectedCell
 
 
 clear selectData plotData rateData
-xLimits = [-1000 1000];
+
 NLX_DIMMING1 =  25; 
 NLX_DIMMING2 =  26;
 CUE_ON       =  20;
@@ -249,7 +249,7 @@ BAR_RELEASED = 104;
 
 if SHOWPLOTS
  
-   timeArray=(-1000:2000);  
+   timeArray=(-2000:2000); % time range to analyze 
     
  [~,fName,~] = fileparts(resultData.spikeFileName);
  figTitle = [fName,' cell=',num2str(resultData.cell)];
@@ -258,49 +258,72 @@ if SHOWPLOTS
  selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
  selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
  
- selectData{4} = [validData.targetDim]'==2 & [validData.attend]'==1  ;
- selectData{5} = [validData.targetDim]'==2 & [validData.attend]'==2  ; 
- selectData{6} = [validData.targetDim]'==2 & [validData.attend]'==3  ; 
+ selectData{4} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
+ selectData{5} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
+ selectData{6} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
+ 
+ selectData{7} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
+ selectData{8} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
+ selectData{9} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
  
 
 
  maxOfHist =[];
  for i=1:3
-    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_DIMMING1); %#ok<AGROW>
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_STIM_ON')); %#ok<AGROW>
     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
  end
  
   for i=4:6
-    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_DIMMING2); %#ok<AGROW>
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_CUE_ON')); %#ok<AGROW>
     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
- end
+  end
  
+  for i=7:9
+    plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_DIMMING1')); %#ok<AGROW>
+    maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
+  end
+ 
+ % Align To Stimulus on
  histScale = max(maxOfHist);
- 
- 
- figure('color',[1 1 1],'position', [100,0,900,700]);
- subplot(3,2,1);
- title('Attend in (dim1)');
+ xLimits = [-500 1000]; % time range to plot
+ figure('color',[1 1 1],'position', [100,0,1400,700]);
+ subplot(3,3,1);
+ title('Attend in (Align STIM)');
  PlotSpikeHistogram(plotData{1},xLimits,histScale);
- subplot(3,2,3);
+ subplot(3,3,4);
  title('Attend out1');
  PlotSpikeHistogram(plotData{2},xLimits,histScale);   
- subplot(3,2,5);
+ subplot(3,3,7);
  title('Attend out2');
  PlotSpikeHistogram(plotData{3},xLimits,histScale);
  
-  subplot(3,2,2);
- title('Attend in (dim2)');
+ % Align To Cue on
+ xLimits = [-500 2000]; % time range to plot
+  subplot(3,3,2);
+ title('Attend in (Align CUE)');
  PlotSpikeHistogram(plotData{4},xLimits,histScale);
- subplot(3,2,4);
+ subplot(3,3,5);
  title('Attend out1');
  PlotSpikeHistogram(plotData{5},xLimits,histScale);   
- subplot(3,2,6);
+ subplot(3,3,8);
  title('Attend out2');
  PlotSpikeHistogram(plotData{6},xLimits,histScale);
+ 
+ % Align To Dimming
+  xLimits = [-2000 500]; % time range to plot
+  subplot(3,3,3);
+ title('Attend in (Align DIM)');
+ PlotSpikeHistogram(plotData{7},xLimits,histScale);
+ subplot(3,3,6);
+ title('Attend out1');
+ PlotSpikeHistogram(plotData{8},xLimits,histScale);   
+ subplot(3,3,9);
+ title('Attend out2');
+ PlotSpikeHistogram(plotData{9},xLimits,histScale);
 
 % plot title 
 axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
-text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
+text(0.4, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
 
 end
