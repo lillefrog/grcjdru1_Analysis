@@ -97,7 +97,7 @@ if SHOWPLOTS
  
    timeArray=(-2000:2000); % time range to analyze 
     
- [~,fName,~] = fileparts(resultData.spikeFileName);
+ [crap,fName] = fileparts(resultData.spikeFileName);
  figTitle = [fName,' cell=',num2str(resultData.cell)];
     
  selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;

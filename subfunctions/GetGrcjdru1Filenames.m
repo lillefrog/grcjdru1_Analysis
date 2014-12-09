@@ -11,7 +11,7 @@ function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
 
 
 
-[pathstr,name,~] = fileparts(spikeFileName); 
+[pathstr,name] = fileparts(spikeFileName); 
 
 % event files have a very consistent name and position
 eventFilename = [pathstr,'\Events.Nev'];
@@ -27,8 +27,15 @@ cortexDir = [parentDir,'Cortex\'];
 
 % if we take the first part of the spikefile name we should get the ctx
 % file name. This is very dependet on preprocessing
-pos = find(name=='.',1,'first');
-searchString = name(1:pos+3);
+pos = find(name==' ',1,'first');
+if isempty(pos)
+    pos = find(name=='.',1,'first');
+    searchString = name(1:pos+3);   
+else
+    searchString = name(1:pos);
+end
+
+disp(['[',searchString,']']);
 
 % search for ctx file, this file can be in different places and the folder
 % name is often unique so we have to do some searching
