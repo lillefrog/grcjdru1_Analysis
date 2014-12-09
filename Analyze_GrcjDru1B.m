@@ -82,170 +82,16 @@ clear isError isCorrect targetDim validTrials allData selectedCell
 
 %% select the data
 
-
-clear selectData plotData rateData
-
-NLX_DIMMING1 =  25; 
-NLX_DIMMING2 =  26;
-CUE_ON       =  20;
-STIM_ON      =   8;
-BAR_RELEASED = 104;
-
-%alignEvent = BAR_RELEASED;
-
-
-%% Calculate fanofactor
-% analyzeTimeRange = [-1000,1000]; % jones fastest reaction time is 216ms
-% alignEvent = NLX_DIMMING1;
-% 
-% % in data
-% attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-% [inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% resultData.dim1.fanoFactorIn = inNoDrugFF.fanoFactor;
-% 
-% % Out data
-% attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-% [outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
-% resultData.dim1.fanoFactorOut = outNoDrugFF.fanoFactor;
-% 
-% alignEvent = CUE_ON;
-% 
-% % in data
-% attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-% [inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% resultData.cue.fanoFactorIn = inNoDrugFF.fanoFactor;
-% 
-% % Out data
-% attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-% [outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
-% resultData.cue.fanoFactorOut = outNoDrugFF.fanoFactor;
-% 
-% alignEvent = STIM_ON;
-% 
-% % in data
-% attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-% [inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% resultData.stim.fanoFactorIn = inNoDrugFF.fanoFactor;
-% 
-% % Out data
-% attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-% [outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
-% resultData.stim.fanoFactorOut = outNoDrugFF.fanoFactor;
+%% Some possible events
+% NLX_DIMMING1 
+% NLX_DIMMING2
+% NLX_CUE_ON
+% NLX_STIM_ON
+% BAR_RELEASED
 
 
 
-%% My analysis
-% analyzeTimeRange = [0,200]; % jones fastest reaction time is 216ms
-% alignEvent = NLX_DIMMING1;
-% 
-% % select the data and get the spike counts
-% % first dimming
-% attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1 );
-% [inDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 1;
-% 
-% attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-% [inNoDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 1;
-% 
-% attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==1 );
-% [out1Drug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
-% out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 1;
-% 
-% attendOut1Data = validData( [validData.targetDim]'==1 & [validData.attend]'==2 & [validData.drug]'==0 );
-% [out1NoDrug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
-% out1NoDrug.drug = 0; out1NoDrug.attend = 2; out1NoDrug.dim = 1;
-% 
-% attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==1 );
-% [out2Drug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
-% out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 1;
-% 
-% attendOut2Data = validData( [validData.targetDim]'==1 & [validData.attend]'==3 & [validData.drug]'==0 );
-% [out2NoDrug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
-% out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 1;
-% 
-% combinedDataDim1 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
-% 
-% % select the data and get the spike counts
-% % second dimming
-% alignEvent = NLX_DIMMING2;
-% 
-% attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==1 );
-% [inDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% inDrug.drug = 1; inDrug.attend = 1; inDrug.dim = 2;
-% 
-% attendInData = validData( [validData.targetDim]'==2 & [validData.attend]'==1 & [validData.drug]'==0 );
-% [inNoDrug] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
-% inNoDrug.drug = 0; inNoDrug.attend = 1; inNoDrug.dim = 2;
-% 
-% attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==1 );
-% [out1Drug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
-% out1Drug.drug = 1; out1Drug.attend = 2; out1Drug.dim = 2;
-% 
-% attendOut1Data = validData( [validData.targetDim]'==2 & [validData.attend]'==2 & [validData.drug]'==0 );
-% [out1NoDrug] = CalculateSpikeData(attendOut1Data,analyzeTimeRange,alignEvent);
-% out1NoDrug.drug = 0; out1NoDrug.attend = 2;  out1NoDrug.dim = 2;
-% 
-% attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==1 );
-% [out2Drug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
-% out2Drug.drug = 1; out2Drug.attend = 3; out2Drug.dim = 2;
-% 
-% attendOut2Data = validData( [validData.targetDim]'==2 & [validData.attend]'==3 & [validData.drug]'==0 );
-% [out2NoDrug] = CalculateSpikeData(attendOut2Data,analyzeTimeRange,alignEvent);
-% out2NoDrug.drug = 0; out2NoDrug.attend = 3; out2NoDrug.dim = 2;
-% 
-% combinedDataDim2 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
-% 
-% % combine all the data for the anova
-% combinedData = [combinedDataDim1,combinedDataDim2];%{inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug}; 
-% 
-% if SHOWPLOTS
-%     [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full');
-% else
-%     [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full','display','off');
-% end
-% 
-% resultData.p = p;
-% resultData.table = table;
-
-%%  plot data
-% 
-% if SHOWPLOTS
-%   alignEvent = NLX_DIMMING1;
-%   timeArray=(-1000:2000);  
-%     
-%  [~,fName,~] = fileparts(resultData.spikeFileName);
-%  figTitle = [fName,' cell=',num2str(resultData.cell)];
-%     
-%  selectData{1} = [validData.targetDim]'==1 & [validData.attend]'==1  ;
-%  selectData{2} = [validData.targetDim]'==1 & [validData.attend]'==2  ; 
-%  selectData{3} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
-%  figure('color',[1 1 1],'position', [100,100,900,700]);
-% 
-%  maxOfHist =[];
-%  for i=1:length(selectData)
-%     plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,alignEvent); %#ok<AGROW>
-%     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
-%  end
-%  histScale = max(maxOfHist);
-% 
-%  subplot(3,1,1);
-%  title('Attend in');
-%  PlotSpikeHistogram(plotData{1},xLimits,histScale);
-%  subplot(3,1,2);
-%  title('Attend out1');
-%  PlotSpikeHistogram(plotData{2},xLimits,histScale);   
-%  subplot(3,1,3);
-%  title('Attend out2');
-%  PlotSpikeHistogram(plotData{3},xLimits,histScale);
-% 
-% % plot title 
-% axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
-% text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
-% 
-% end
-
-%%  plot data after first and second dimming
+%%  plot data 
 
 if SHOWPLOTS
  
@@ -267,23 +113,24 @@ if SHOWPLOTS
  selectData{9} = [validData.targetDim]'==1 & [validData.attend]'==3  ; 
  
 
-
- maxOfHist =[];
- for i=1:3
+ % calculate the data to plot
+ maxOfHist =[]; % maximum of each histogram, used to set the scale when plotting
+ for i=1:3 % Align To Stimulus on
     plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_STIM_ON')); %#ok<AGROW>
     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
  end
  
-  for i=4:6
+  for i=4:6 % Align To Cue on
     plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_CUE_ON')); %#ok<AGROW>
     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
   end
  
-  for i=7:9
+  for i=7:9 % Align To Dimming
     plotData{i} = GrcjDru1Histogram(validData(selectData{i}),timeArray,NLX_event2num('NLX_DIMMING1')); %#ok<AGROW>
     maxOfHist = [maxOfHist, plotData{i}.maxHist];         %#ok<AGROW>
   end
  
+ % Plot the histograms  
  % Align To Stimulus on
  histScale = max(maxOfHist);
  xLimits = [-500 1000]; % time range to plot
