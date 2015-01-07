@@ -1,7 +1,7 @@
 function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
 
 % Ask for the spike filename if it is not given
- if nargin<1 || isempty(spikeFileName) || ~exist(spikeFileName,'file');
+ if nargin<1 || isempty(spikeFileName);
     [fileName,filePath] = uigetfile('*.*','open a spike data file','MultiSelect','off'); 
     spikeFileName = fullfile(filePath,fileName);
  end
@@ -12,8 +12,8 @@ function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
 
  % default setup
  defaultSetup.showfig = true;
- defaultSetup.saveFigPath = 'E:\temp\';
- defaultSetup.saveFileName = 'E:\temp\test.mat';
+ defaultSetup.saveFigPath = 'E:\temp'; % E:\temp
+ defaultSetup.saveFileName = 'E:\temp\test.mat'; % E:\temp\test.mat
 
  if nargin<3 || ~exist(setup,'var')
      % if no setup is supplied use the default
@@ -24,9 +24,18 @@ function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
  end
 
  
+ 
+ 
+ 
 %% Read data 
 
-[eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
+if exist(spikeFileName,'file')
+    [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
+else
+    disp(['File not found ', spikeFileName]);
+    return;
+end
+    
 
 % Read the NLX event file and cut out the part related to our experiment
 [automaticEvents,manualEvents] = NLX_ReadEventFile(eventFilename);
@@ -63,6 +72,8 @@ resultData.spkWidth = spkWidth;
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
 ctxData = CleanCtxSaccp3Events(ctxDataTemp);
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
+
+allData = GetEOGsaccadeTime(allData);
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
 %% select what to Analyze (this is the overall selection )
@@ -105,12 +116,12 @@ clear isCorrect validTrials allData
 %AlignString = 'NLX_SUBJECT_START'; % fixation
 
 
-% AlignString = 'NLX_STIM_ON';
-% xLimits = [-200 1000]; % range around align point to plot
+AlignString = 'NLX_STIM_ON';
+xLimits = [-200 1000]; % range around align point to plot
 
-AlignString = 'NLX_SACCADE_START';
-xLimits = [-300 300]; % range around align point to plot
-% 
+% AlignString = 'NLX_SACCADE_START';
+% xLimits = [-600 600]; % range around align point to plot
+
 % AlignString = 'NLX_TRIAL_START';
 % xLimits = [-100 1000]; % range around align point to plot
 
@@ -137,12 +148,17 @@ for i=1:nrDirections
  scaleFactor = 2.7*sqrt(positionTarget(1)^2+positionTarget(2)^2);
  posSubplot{i} = [0.5+(positionTarget/scaleFactor)-[subPlotWidth/2 subPlotHight/2] subPlotWidth subPlotHight];
  
- StimOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_STIM_ON'));
- SaccOnDataA = CalculateSpikeData(tempData,[-200 0],NLX_event2num('NLX_SACCADE_START'));
- SaccOnDataB = CalculateSpikeData(tempData,[-100 100],NLX_event2num('NLX_SACCADE_START'));
- SaccOnDataC = CalculateSpikeData(tempData,[0 200],NLX_event2num('NLX_SACCADE_START'));
+ %StimOnData = CalculateSpikeData(tempData,[0 500],NLX_event2num('NLX_STIM_ON'));
+%  SaccOnDataA = CalculateSpikeData(tempData,[-200 0],NLX_event2num(AlignString));
+%  SaccOnDataB = CalculateSpikeData(tempData,[-100 100],NLX_event2num(AlignString));
+%  SaccOnDataC = CalculateSpikeData(tempData,[0 200],NLX_event2num(AlignString));
+
+ SaccOnDataA = CalculateSpikeData(tempData,[0 200],NLX_event2num(AlignString));
+ SaccOnDataB = CalculateSpikeData(tempData,[200 400],NLX_event2num(AlignString));
+ SaccOnDataC = CalculateSpikeData(tempData,[400 1000],NLX_event2num(AlignString));
+
  pos(i,:) = positionTarget;         %#ok<AGROW>
- StimOn{i} = StimOnData.nrSpikes;   %#ok<AGROW>
+ %StimOn{i} = StimOnData.nrSpikes;   %#ok<AGROW>
  SaccOnA{i} = SaccOnDataA.nrSpikes;   %#ok<AGROW>
  SaccOnB{i} = SaccOnDataB.nrSpikes;   %#ok<AGROW>
  SaccOnC{i} = SaccOnDataC.nrSpikes;   %#ok<AGROW>
@@ -164,7 +180,7 @@ if setup.showfig
     % spiff up the main figure
     figure(mainFig); % select the figur
     [~, name, ext] = fileparts(resultData.cortexFilename); % get filename for title
-    figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString,' SpikeWidth: ',num2str(spkWidth.peakTrough,3)];
+    figureTitle = [name,ext,' Cell=',num2str(resultData.Cell), '  Align to: ', AlignString,' SpikeWidth: ',num2str(spkWidth.peakTrough,3),'+-',num2str(spkWidth.peakTroughVar ,3)    ];
     axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off'); % make invisible axis
     text(0.5, 0.97,figureTitle,'VerticalAlignment', 'top','HorizontalAlignment', 'center','Interpreter', 'none'); % print title
     line([0.5 0.5],[0.49 0.51],'Color','k'); % draw the cross in the middle
@@ -173,13 +189,14 @@ end
 
 % draw polar plots
 % saccOnDirec = PlotPolarData(SaccOn,pos,[.2 .2 1],setup.showfig);
-saccOnDirec = PlotPolarData(SaccOnA,pos,[1 .2 .2],setup.showfig);
-SaccOnDirec = PlotPolarData(SaccOnB,pos,[.2 1 .2],setup.showfig);
-stimOnDirec = PlotPolarData(SaccOnC,pos,[.2 .2 1],setup.showfig);
+saccOnDirecA = PlotPolarData(SaccOnA,pos,[1 .2 .2],setup.showfig);
+saccOnDirecB = PlotPolarData(SaccOnB,pos,[.2 1 .2],setup.showfig);
+saccOnDirecC = PlotPolarData(SaccOnC,pos,[.2 .2 1],setup.showfig);
 
 if setup.showfig
-    text(0.4,0.35, ['SaccadeOnset pVal: ',num2str(saccOnDirec.bootVlengthPval)], 'Color',[.2 .2 1]);
-    text(0.4,0.33, ['StimOnset    pVal: ',num2str(stimOnDirec.bootVlengthPval)], 'Color',[1 .2 .2]);
+    text(0.4,0.35, [' pVal: ',num2str(saccOnDirecA.bootVlengthPval)], 'Color',[1 .2 .2]);
+    text(0.4,0.33, [' pVal: ',num2str(saccOnDirecB.bootVlengthPval)], 'Color',[.2 1 .2]);
+    text(0.4,0.31, [' pVal: ',num2str(saccOnDirecC.bootVlengthPval)], 'Color',[.2 .2 1]);
 
     if exist(setup.saveFigPath,'dir') % save the figure 
         figFileName = [setup.saveFigPath,'\',name,ext,'_',num2str(resultData.Cell),'.png'];
@@ -195,7 +212,7 @@ end
 hold off
 
 %% select and save the output data
-resultData.saccOnDirec = saccOnDirec;
+resultData.saccOnDirec = saccOnDirecA;
 %resultData.stimOnDirec = stimOnDirec;
 
 % save the data to a mat file
