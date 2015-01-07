@@ -22,7 +22,7 @@ SHOWPLOTS = true; % set this to false if you just want the data without graphs
     spikeFileName = fullfile(filePath,fileName);
  end
 
-[eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
+[eventFilename,cortexFilename,iniFileName] = GetGrcjdru1Filenames(spikeFileName);
 
 % Read the NLX event file and cut out the part related to our experiment
 [automaticEvents,manualEvents] = NLX_ReadEventFile(eventFilename);
@@ -61,76 +61,79 @@ ctxData = GetCtxReactionTime(ctxData);
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
-%% select what to Analyze (this is the overall selection )
+% read the ini file if it exist
+resultData.iniValues = ReadINI(iniFileName);
 
-isError     = [allData.error]';  % did the program find any errors 
-isCorrect   = [allData.correctTrial]'; % did the monkey compleate the task
+%% select what to Analyze. This is the place where we select the overall trials to use.
+% some selection might go on it the analysis
+
+isError      = [allData.error]';  % did the program find any errors 
+isCorrect    = [allData.correctTrial]'; % did the monkey compleate the task
 hasSpikes    = [allData.hasSpikes]'; % is there any spikes at all
-validTrials = ((isCorrect) & (~isError) & (hasSpikes) );  % Find trials that are correct, has no errors, and has spikes
-validData   = allData(validTrials);
+drugRunIn    = [allData.drugChangeCount]'; % number of trials after the drug changed 
+validTrials  = ((isCorrect) & (~isError) & (hasSpikes) & (drugRunIn>3) );  % Find trials that are correct, has no errors, and has spikes
+validData    = allData(validTrials);
 
-%TODO
-% find the first trial with spikes in and the last trial with spikes in
-% and exclude everything outside that
 
+resultData.Data = validData;
 resultData.spikeFileName = spikeFileName;
 resultData.eventFilename = eventFilename;
 resultData.cortexFilename = cortexFilename;
+resultData.iniFileName = iniFileName;
 resultData.cell = selectedCell; 
 resultData.nValidTrials = sum(validTrials);
 clear isError isCorrect targetDim validTrials allData selectedCell
 
-%% select the data
+%% Possible align points
 
-% Add calculate Fano Factor
 
 clear selectData plotData rateData
-xLimits = [-1000 1000];
 NLX_DIMMING1 =  25; 
 NLX_DIMMING2 =  26;
 CUE_ON       =  20;
 STIM_ON      =   8;
-BAR_RELEASED = 104;
-
-%alignEvent = BAR_RELEASED;
+% BAR_RELEASED = 104;
 
 
-%% Calculate fanofactor
-analyzeTimeRange = [-1000,1000]; % jones fastest reaction time is 216ms
+
+%% analyse the data
+
+plotxLimits = [-1000 1000]; % just used for plotting
+analyzeTimeRange = [-1000,1000]; % Range to analyze
 alignEvent = NLX_DIMMING1;
 
 % in data
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+[inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 resultData.dim1.fanoFactorIn = inNoDrugFF.fanoFactor;
 
 % Out data
 attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+[outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
 resultData.dim1.fanoFactorOut = outNoDrugFF.fanoFactor;
 
 alignEvent = CUE_ON;
 
 % in data
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+[inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 resultData.cue.fanoFactorIn = inNoDrugFF.fanoFactor;
 
 % Out data
 attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+[outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
 resultData.cue.fanoFactorOut = outNoDrugFF.fanoFactor;
 
 alignEvent = STIM_ON;
 
 % in data
 attendInData = validData( [validData.targetDim]'==1 & [validData.attend]'==1 & [validData.drug]'==0 );
-[inNoDrugFF] = CalculateFanoFactor(attendInData,analyzeTimeRange,alignEvent);
+[inNoDrugFF] = CalculateSpikeData(attendInData,analyzeTimeRange,alignEvent);
 resultData.stim.fanoFactorIn = inNoDrugFF.fanoFactor;
 
 % Out data
 attendOutData = validData( [validData.targetDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==0 );
-[outNoDrugFF] = CalculateFanoFactor(attendOutData,analyzeTimeRange,alignEvent);
+[outNoDrugFF] = CalculateSpikeData(attendOutData,analyzeTimeRange,alignEvent);
 resultData.stim.fanoFactorOut = outNoDrugFF.fanoFactor;
 
 
@@ -201,9 +204,9 @@ combinedDataDim2 = {inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug};
 combinedData = [combinedDataDim1,combinedDataDim2];%{inDrug,inNoDrug,out1Drug,out1NoDrug,out2Drug,out2NoDrug}; 
 
 if SHOWPLOTS
-    [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full');
+    [p,table,~,~] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full');
 else
-    [p,table,stats,terms] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full','display','off');
+    [p,table,~,~] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend','dim'},'model','full','display','off');
 end
 
 resultData.p = p;
@@ -232,13 +235,13 @@ if SHOWPLOTS
 
  subplot(3,1,1);
  title('Attend in');
- PlotSpikeHistogram(plotData{1},xLimits,histScale);
+ PlotSpikeHistogram(plotData{1},plotxLimits,histScale);
  subplot(3,1,2);
  title('Attend out1');
- PlotSpikeHistogram(plotData{2},xLimits,histScale);   
+ PlotSpikeHistogram(plotData{2},plotxLimits,histScale);   
  subplot(3,1,3);
  title('Attend out2');
- PlotSpikeHistogram(plotData{3},xLimits,histScale);
+ PlotSpikeHistogram(plotData{3},plotxLimits,histScale);
 
 % plot title 
 axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
@@ -282,23 +285,23 @@ if SHOWPLOTS
  figure('color',[1 1 1],'position', [100,0,900,700]);
  subplot(3,2,1);
  title('Attend in (dim1)');
- PlotSpikeHistogram(plotData{1},xLimits,histScale);
+ PlotSpikeHistogram(plotData{1},plotxLimits,histScale);
  subplot(3,2,3);
  title('Attend out1');
- PlotSpikeHistogram(plotData{2},xLimits,histScale);   
+ PlotSpikeHistogram(plotData{2},plotxLimits,histScale);   
  subplot(3,2,5);
  title('Attend out2');
- PlotSpikeHistogram(plotData{3},xLimits,histScale);
+ PlotSpikeHistogram(plotData{3},plotxLimits,histScale);
  
   subplot(3,2,2);
  title('Attend in (dim2)');
- PlotSpikeHistogram(plotData{4},xLimits,histScale);
+ PlotSpikeHistogram(plotData{4},plotxLimits,histScale);
  subplot(3,2,4);
  title('Attend out1');
- PlotSpikeHistogram(plotData{5},xLimits,histScale);   
+ PlotSpikeHistogram(plotData{5},plotxLimits,histScale);   
  subplot(3,2,6);
  title('Attend out2');
- PlotSpikeHistogram(plotData{6},xLimits,histScale);
+ PlotSpikeHistogram(plotData{6},plotxLimits,histScale);
 
 % plot title 
 axes('Position',[0 0 1 1],'Xlim',[0 1],'Ylim',[0 1],'Box','off','Visible','off','Units','normalized', 'clipping' , 'off');
