@@ -23,7 +23,7 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 
 SLOW = true;
 CUE_ON =  20;
-NLX_RECORD_END = 64;
+%NLX_RECORD_END = 64;
 
 % konstants used for fitting the histogram
 sigma = 10;
@@ -38,13 +38,26 @@ xCueArray = [];
 yCueArray = [];
 yValue = 0;
 
+% if  alignEvent == NLX_event2num('NLX_SACCADE_START')
+%     isSaccade = true;
+% else
+%     isSaccade = false;
+% end
+
 
 for i=1:length(xData)
     spikes = xData(i).nlxSpikes(:,1); % get the spike times for the trial
     events = xData(i).nlxEvents; % read the neuralynx events for the trial
     alignEventPos = find(events(:,2) == alignEvent,1,'last'); % find the event to align the spikes to
     if ~isempty(alignEventPos) % skip trials that dont have a start event
+        
         alignTime = events(alignEventPos,1); % get the time for that event
+        if ((isfield(xData(i), 'SaccTimeAjustment')) && ~isempty(xData(i).SaccTimeAjustment) && alignEvent == NLX_event2num('NLX_SACCADE_START'));
+            % if we are aligning to saccade and if there is a saccade
+            % ajustment we use that to correct the align time
+            alignTime = alignTime + xData(i).SaccTimeAjustment * 1000; % use the time from the eye tracker
+        end
+        
         spikes = (spikes - alignTime)/1000; % recalculate to mS
         
        if SLOW 
@@ -55,11 +68,6 @@ for i=1:length(xData)
             spikesSmooth(i,:) = spikesSmooth(i,:) + sp1;
         end
 
-%         parfor j=1:length(spikes) % making it parallel adds too much overhead
-%             sp1(j,:) = ((k1).*exp(-(((timeArray-spikes(j)).^2)/(k2)))); 
-%         end
-%         spikesSmooth(i,:) = sum(sp1);
-%         clear 'sp1'
         
        else % faster version of the interpolation (not that much faster)
         spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
