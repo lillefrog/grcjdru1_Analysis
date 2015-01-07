@@ -59,6 +59,7 @@ for i = 1:length(ctxData);
     else
         drugChangeCount = drugChangeCount+1;
     end
+    drugOld = trialData.drug;
     ctxDataOut(i).drugChangeCount = drugChangeCount;
  else 
     ctxDataOut(i).error           = trialData.error; 
