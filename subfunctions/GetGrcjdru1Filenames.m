@@ -1,4 +1,4 @@
-function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
+function [eventFilename,ctxFileName,iniFileName] = GetGrcjdru1Filenames(spikeFileName)
 % Reads the spikeFileName and tries to find the event and ctx file. This 
 % only works if the files are stored in a consistent way.
 %
@@ -8,6 +8,8 @@ function [eventFilename,ctxFileName] = GetGrcjdru1Filenames(spikeFileName)
 % Output:
 %  eventFilename: name and path of the neuralynx event file
 %  ctxFileName: name and path of the cortex data file
+%  iniFileName: name and path of the ini data file that is stored with some
+%     recordings. If the file does not exist it will just be a empty string
 
 
 
@@ -32,10 +34,10 @@ if isempty(pos)
     pos = find(name=='.',1,'first');
     searchString = name(1:pos+3);   
 else
-    searchString = name(1:pos);
+    searchString = name(1:pos-1);
 end
 
-disp(['[',searchString,']']);
+disp(['Cortex file=','"',searchString,'"']);
 
 % search for ctx file, this file can be in different places and the folder
 % name is often unique so we have to do some searching
@@ -54,6 +56,18 @@ if isempty(searchResult)
     end
 else
   ctxFileName = [cortexDir,searchResult.name];  
+end
+
+% look for the INI data file that stores information about the recording in
+% newer recordings.
+iniFileName = strrep(searchString,'.','_');
+iniFileName = [parentDir,iniFileName,'.txt'];
+
+if (exist(iniFileName,'file')==2)
+    disp(['Found: ',iniFileName]);
+else
+    disp(['File not found: ',iniFileName]);
+    iniFileName = '';
 end
 
 % raise errors if we are missing any files
