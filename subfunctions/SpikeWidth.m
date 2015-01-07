@@ -27,6 +27,23 @@ SAMPLERATE = 32556; %samples/sec
 
 %% Load data from file
 
+% check if there exist a dedicated spike file (it will have the same name
+% but with _SW added to the end. This file must contain the same number and
+% order of cells but sorted much strikter.
+
+[pathstr,name,ext] = fileparts(spikeFileName);
+disp(name)
+swFileName = [pathstr,name,'_SW',ext]; 
+disp(swFileName)
+if exist(swFileName,'file');
+    disp([swFileName, ' Loaded instead']);
+    spikeFileName = swFileName;
+else 
+    disp([swFileName, ' not found']);
+end;
+
+
+
     [cellNumbers, Features, Samples] = Nlx2MatSpike(spikeFileName, [0 0 1 1 1],  0, ExtractMode, ModeArray );
 
 
