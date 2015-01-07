@@ -21,6 +21,7 @@ function [d] = PlotPolarData(data,pos,figColor,SHOWPLOTS)
 
 radius = 0.1; % radius of the mean circle
 nrPositions = size(data,2); % positions
+bootstrapIterations = 5000;
 
 % get the mean for each position
 for i=1:nrPositions
@@ -64,10 +65,10 @@ end
 % Bootstrap the avarage vector and directionality index
 polarStats = calcPolarStats(anovaData,anovaPositions);
 myF = @(bootr)calcPolarStats(bootr,anovaPositions);
-iterations = 5000;
-bootStrapData = bootstrp(iterations,myF,anovaData);
-bootVlengthPval = sum(bootStrapData(:,1)>=polarStats(1))/iterations; % how many of the bootstrapped values are bigger than my vLength
-bootDirecPval = sum(bootStrapData(:,2)>=polarStats(2))/iterations; % how many of the bootstrapped values are bigger than my direction index
+
+bootStrapData = bootstrp(bootstrapIterations,myF,anovaData);
+bootVlengthPval = sum(bootStrapData(:,1)>=polarStats(1))/bootstrapIterations; % how many of the bootstrapped values are bigger than my vLength
+bootDirecPval = sum(bootStrapData(:,2)>=polarStats(2))/bootstrapIterations; % how many of the bootstrapped values are bigger than my direction index
 
 
 % save data for the output
@@ -119,6 +120,8 @@ function stats = calcPolarStats(data,pos)
 % it is a bit messy but because it runs within the bootstrap function it is
 % extreamly time critical and this is the fastest version we have been able
 % to come up with
+%
+% TODO calculate alpha correctly
 
 nPositions = max(pos); % get the number of positions
 
@@ -131,16 +134,16 @@ y=0;
 DD = zeros(nPositions,1);
 alphaStep = (2*pi)/nPositions;
 
-% michaels optimized C-like code
+% michaels optimized C-like code for calculating the mean for each position
 runningTotals = zeros(nPositions,1);
 runningCounts = zeros(nPositions,1);
 for i=1:length(data)
    runningTotals(pos(i)) = runningTotals(pos(i)) + data(i);
    runningCounts(pos(i)) = runningCounts(pos(i)) + 1;
 end
-
 DD(:) = runningTotals(:) ./ runningCounts(:);
 
+% this is actually cheating we should calculate alpha from the positions!!
 for i=1:nPositions
     %DD(i) = mean(data(pos==i));
     alpha = alphaStep*i;
