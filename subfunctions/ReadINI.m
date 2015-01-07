@@ -26,9 +26,10 @@ if fid~=-1
                 otherwise % this is a key
                     pos = strfind(tline,'=');
                     if ~isempty(pos)   
-                        key = tline(pos(1)+1:end);
-                        out = convertToNumber(key);
-                        values.(section).(tline(1:pos(1)-1)) = out;
+                        keyStr = tline(pos(1)+1:end); % everythin from = to the end of the line is the key
+                        key = convertToNumber(keyStr); % convert to number if possible
+                        field = strtrim(tline(1:pos(1)-1)); % everything before = is field name (minus blank spaces)
+                        values.(section).(field) = key; % add it all to a structure
                     else
                         warning(['Line in INI file(',fName,') corrupted : ',tline]); %#ok<WNTAG>
                     end
