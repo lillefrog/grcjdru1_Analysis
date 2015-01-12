@@ -32,36 +32,31 @@ SAMPLERATE = 32556; %samples/sec
 % order of cells but sorted much strikter.
 
 [pathstr,name,ext] = fileparts(spikeFileName);
-disp(name)
 swFileName = [pathstr,name,'_SW',ext]; 
-disp(swFileName)
 if exist(swFileName,'file');
     disp([swFileName, ' Loaded instead']);
     spikeFileName = swFileName;
 else 
-    disp([swFileName, ' not found']);
+    %disp([swFileName, ' not found']);
 end;
 
 
-
-    [cellNumbers, Features, Samples] = Nlx2MatSpike(spikeFileName, [0 0 1 1 1],  0, ExtractMode, ModeArray );
+% Load the spike file
+[cellNumbers, Features, Samples] = Nlx2MatSpike(spikeFileName, [0 0 1 1 1],  0, ExtractMode, ModeArray );
 
 
 
 %% Analyze the data
 
 
- %avarageDelays=zeros(1,1);
 
-
-%%
+%% Prepare to interpolate the data
 orginalSamples = 1:32; % Neuralynx records 32 samples for each spike
 samplesBeforeMax = 8; % Neuralynx adjusts the maximum to the 8th sample
 sampleTime = 1000000/SAMPLERATE; % ysec/sample
 timelineOrg= ((orginalSamples)-samplesBeforeMax) * sampleTime;  % Calculate timeline for original data
 scalingFactor = 1/6; % Original Samples / New Samples % 1/6 = 6 times as many samples after interpolation
 newSamples = 1:(scalingFactor):max(orginalSamples); %Array of new sample positions
-
 timeline = spline(orginalSamples, timelineOrg, newSamples);
 compactFrequencyOfDelay = zeros(length(timeline),1);
 
@@ -86,7 +81,7 @@ compactFrequencyOfDelay = zeros(length(timeline),1);
             DelaysOfMinimum = bsxfun(@eq,spikesInterpolated,min(spikesInterpolated(7*6:end,:)));
             DelaysOfMinimum = DelaysOfMinimum(:,sum(DelaysOfMinimum,1)==1);  %% Remove any case where there is more or less than one minimum
             FrequencyOfDelay = sum(DelaysOfMinimum,2);
-            compactFrequencyOfDelay(:,cell+1) = FrequencyOfDelay(1:end) / sum(FrequencyOfDelay); % Normalize the histograms
+           % compactFrequencyOfDelay(:,cell+1) = FrequencyOfDelay(1:end) / sum(FrequencyOfDelay); % Normalize the histograms
             
             % calculate the distribution of delays
             RealDelays = bsxfun(@times,DelaysOfMinimum,(timeline'));
