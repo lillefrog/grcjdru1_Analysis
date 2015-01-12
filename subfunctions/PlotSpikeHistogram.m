@@ -20,7 +20,11 @@ end
 figHandle = gcf;
 hold on
 
+
+
 for i=1:size(plotData,2)    
+  if(size(plotData(i).ySpikes,1)>0)  % check if there are any spike to plot  
+    % default design settings
     if ~(mod(i,2) == 0) % 1,3,5
       histColor = [0.3 0.3 0.3];
       spikeColor = [0.3 0.3 0.3];
@@ -30,6 +34,21 @@ for i=1:size(plotData,2)
       spikeColor = [0 0 0];
       histLineWidth = 2;
     end
+    
+    % if the data already has information about the design we overwrite
+    % the default settings
+    if isfield(plotData, 'lineWidth') 
+        histLineWidth = plotData(i).lineWidth ;
+    end
+    
+    if isfield(plotData, 'spikeColor')
+        spikeColor = plotData(i).spikeColor ;
+    end
+    
+    if isfield(plotData, 'histColor')
+        histColor = plotData(i).histColor ;
+    end
+    
     
  % plot the histogram
     histogram = (gaussfit(30,0,plotData(i).yHistogram)/histScale)*100; % smoothe the histogram
@@ -54,6 +73,9 @@ for i=1:size(plotData,2)
 %     hAnnotation = get(raster_handle,'Annotation');
 %     hLegendEntry = get(hAnnotation','LegendInformation');
 %     set(hLegendEntry,'IconDisplayStyle','off');
+  else
+    disp('No spikes in some conditions, These conditions will not be plotted');  
+  end
 end
     
 % I'm not sure if this scale actually means anything
