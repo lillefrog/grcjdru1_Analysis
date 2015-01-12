@@ -75,7 +75,7 @@ for i=1:length(xData)
        end
         
         % calclulate position of cue 
-        cueEventPos = find(events(:,2) == CUE_ON,1,'last'); % find the event to align the spikes to   
+        cueEventPos = find(events(:,2) == CUE_ON,1,'last'); % find the position of the cue  
         if ~isempty(cueEventPos)
             cueTime = (events(cueEventPos,1) - alignTime) / 1000; % time of the cue compared to the align event in ms
             xCueArray = [xCueArray,cueTime];
