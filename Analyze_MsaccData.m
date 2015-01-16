@@ -15,7 +15,7 @@ function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
  defaultSetup.saveFigPath = 'E:\temp'; % E:\temp
  defaultSetup.saveFileName = 'E:\temp\test.mat'; % E:\temp\test.mat
 
- if nargin<3 || ~exist(setup,'var')
+ if nargin<3 || ~exist('setup','var')
      % if no setup is supplied use the default
     setup = defaultSetup; 
  else
