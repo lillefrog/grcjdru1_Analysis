@@ -1,9 +1,10 @@
-function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell)
+function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell,cellSorting)
 % read the data for the GrcjDru1 experiment
 %
 % Input:
 %   spikeFileName = Name of the sorted spike filed
 %   selectedCell = the selectedCell number you want to use
+%   cellSorting = How good is the sorting? SU (Single Unit) or MU (Multi Unit)
 %
 % Output:
 %   resultData = data structure contaning all kinds of nice stuff
@@ -22,6 +23,11 @@ close all
     spikeFileName = fullfile(filePath,fileName);
  end
 
+ if nargin==3 
+  resultData.cellSorting = cellSorting;  
+ end
+ 
+ 
 [eventFilename,cortexFilename,iniFileName] = GetGrcjdru1Filenames(spikeFileName);
 
 % Read the NLX event file and cut out the part related to our experiment
@@ -43,27 +49,25 @@ maxCellNumber = max(spikeArray(:,2));
 if nargin<2 || isempty(selectedCell); % if selectedCell is not defined
   x = inputdlg(['Enter cell number between 1 and ',num2str(maxCellNumber),' : '],...
              'Cell number missing', [1 50]);
-  selectedCell = str2num(x{1});     %#ok<ST2NM>
+  selectedCell = str2num(x{1});  %#ok<ST2NM>    
 end
-isSelectedCell = (spikeArray(:,2)==selectedCell);
+isSelectedCell = (spikeArray(:,2)==selectedCell); % get all spikes belonging to the current cell
 spikeArray = spikeArray(isSelectedCell,:);
 dividedSpikeArray = NLX_DivideSpikeArray(spikeArray,dividedEventfile);
 clear spikeArray isSelectedCell
 
 % Get the Spike Width
-spkWidth = SpikeWidth(spikeFileName, selectedCell, false);
+spkWidth = SpikeWidth(spikeFileName, selectedCell, false); % find the peak-dip spike width
 resultData.spkWidth = spkWidth;
 
 % read the cortex file and align the data
-[ctxDataTemp] = CTX_Read2Struct(cortexFilename);
-ctxData = CleanCtxGrcjdru1Events(ctxDataTemp);
-ctxData = GetCtxReactionTime(ctxData);
+[ctxDataTemp] = CTX_Read2Struct(cortexFilename); % read the data from the cotex file into struct
+ctxData = CleanCtxGrcjdru1Events(ctxDataTemp); % read the cortex header/trial info
+ctxData = GetCtxReactionTime(ctxData); % get the best possible reaction times from all sources
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
 
-[allData,summary] = GetGrcjdru1Times(allData);
-disp('min dim1 delay');
-disp(summary.dim1Delay.min);
-
+[allData,summary] = GetGrcjdru1Times(allData); % get the timings from nlx events
+resultData.trailSummary = summary; % save the symmary timings from nlx events
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
 % read the ini file if it exist
@@ -73,7 +77,7 @@ resultData.iniValues = ReadINI(iniFileName);
 % some selection might go on it the analysis
 
 isError      = [allData.error]';  % did the program find any errors 
-isCorrect    = [allData.correctTrial]'; % did the monkey compleate the task
+isCorrect    = [allData.correctTrial]'; % did the monkey complete the task
 hasSpikes    = [allData.hasSpikes]'; % is there any spikes at all
 drugRunIn    = [allData.drugChangeCount]'; % number of trials after the drug changed 
 validTrials  = ((isCorrect) & (~isError) & (hasSpikes) & (drugRunIn>3) );  % Find trials that are correct, has no errors, and has spikes
@@ -94,48 +98,110 @@ clear isError isCorrect targetDim validTrials allData
 %% Analysis of cell type (Visual / Attention / Buildup)
 
 figName = 'Cell type analysis'; 
+% cellTypeData = validData(  ~[validData.drug]' ); % select data without drug
+% check the length of the dim1 delay, this can be very erratic since it
+% depends on how fast the system updates the screen
+cellTypeData = validData(  500<[validData.dim1Delay]'  ); %& ~[validData.drug]'
+%cellTypeData = validData(  500<[validData.dim1Delay]' & ~[validData.drug]'  ); %
 
-cellTypeData = validData(  ~[validData.drug]' ); % select data without drug
-%cellTypeData = validData;
-
-% Visual Response
+% ## Visual Response #######################
+analyzeTimeRange = [50,200]; % Range to analyze
 timeArray=(-1000:2000); 
 alignEvent = NLX_event2num('NLX_DIMMING1');
-i=1;
-attendInData = cellTypeData([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'~=1); % rf dims first, subject attend Out1 & Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-i=2;
-attendInData = cellTypeData( ([cellTypeData.out1Dim]'==1 & [cellTypeData.attend]'==3) | ([cellTypeData.out2Dim]'==1 & [cellTypeData.attend]'==2) ); % rf dims first, subject attend Out1 & Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
+
+% visual
+tempData = cellTypeData([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'~=1); % rf dims first, subject attend Out1 & Out2
+plotData{1} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+visualData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+% no visual 
+tempData = cellTypeData( ([cellTypeData.out1Dim]'==1 & [cellTypeData.attend]'==3) | ([cellTypeData.out2Dim]'==1 & [cellTypeData.attend]'==2) ); % rf dims first, subject attend Out1 & Out2
+plotData{2} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+noVisualData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+[~,p,ci,~]  = ttest2(visualData.nrSpikes, noVisualData.nrSpikes);
+visualResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
+visualStr = ['visual response = ', num2str(visualResponse,'%6.2f') ,'sp/s (p=',num2str(p,'%6.4f'),')'];
+
+% ## Attention Response ######################
+timeArray=(-1000:2000); 
+analyzeTimeRange = [100,500]; % Range to analyze
+%alignEvent = NLX_event2num('NLX_CUE_ON');
+
+% attend in
+tempData = cellTypeData([cellTypeData.rfDim]'~=1 & [cellTypeData.attend]'==1); % rf dims first, subject attend Out1 & Out2
+plotData{3} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+attData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+% attend out
+tempData = cellTypeData( ([cellTypeData.out1Dim]'==1 & [cellTypeData.attend]'==3) | ([cellTypeData.out2Dim]'==1 & [cellTypeData.attend]'==2) ); % rf dims first, subject attend Out1 & Out2
+plotData{4} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+noAttData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+[~,p,ci,~]  = ttest2(attData.nrSpikes, noAttData.nrSpikes);
+attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
+attStr = ['Attention response = ', num2str(attResponse,'%6.2f') ,'sp/s (p=',num2str(p,'%6.4f'),')'];
+
+% ## Alex Attention Response ######################
+timeArray=(-1000:2000); 
+analyzeTimeRange = [100,500]; % Range to analyze
+%alignEvent = NLX_event2num('NLX_CUE_ON');
+
+% attend in
+tempData = cellTypeData([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'==1); % rf dims first, subject attend rf
+plotData{5} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+attData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+% attend out
+tempData = cellTypeData( ([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'~=1)  ); % rf dims first, subject attend Out1 & Out2
+plotData{6} = GrcjDru1Histogram(tempData,timeArray,alignEvent); 
+noAttData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+[~,p,ci,~]  = ttest2(attData.nrSpikes, noAttData.nrSpikes);
+attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
+attStr2 = ['Attention response = ', num2str(attResponse,'%6.2f') ,'sp/s (p=',num2str(p,'%6.4f'),')'];
 
 
-% Attention Response
-timeArray=(-100:1200); 
-alignEvent = NLX_event2num('NLX_CUE_ON');
-i=3;
-attendInData = cellTypeData([cellTypeData.rfDim]'~=1 & [cellTypeData.attend]'==1); % rf dims first, subject attend Out1 & Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-i=4;
-attendInData = cellTypeData( ([cellTypeData.out1Dim]'==1 & [cellTypeData.attend]'==3) | ([cellTypeData.out2Dim]'==1 & [cellTypeData.attend]'==2) ); % rf dims first, subject attend Out1 & Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-% plot cell type figure
+% ###  plot cell type figure ######################
 figure('color',[1 1 1],'position', [150,150,900,700],'name',figName);
 histScale = max( cellfun(@(r) r.maxHist, plotData) ); % get the maximum amplitude of the histogram
 
+for i = 1:length(plotData)
+    % in the future always normalize to the same level
+    plotData{i}(1).maxHist = histScale;
+    plotData{i}(2).maxHist = histScale;
+end
+
+
+
 % Visual Response
- subplot(1,2,1);
+ subplot(1,3,1);
  title('Visual (align Dim)');
  plotxLimits = [0 500];
- PlotSpikeHistogram([plotData{1},plotData{2}],plotxLimits,histScale);
+ PlotSpikeHistogram([plotData{1},plotData{2}],plotxLimits,histScale); % 
+ xlabel(visualStr);
  
 % Attention Response 
- subplot(1,2,2);
- title('Attention (align Cue)');
- plotxLimits = [0 600];
- PlotSpikeHistogram([plotData{3},plotData{4}],plotxLimits,histScale);
+ subplot(1,3,2);
+ title('Attention (align Dim)');
+ plotxLimits = [0 500];
+ PlotSpikeHistogram([plotData{3},plotData{4}],plotxLimits,histScale); % 
+ xlabel(attStr);
+ 
+ % Attention Response 
+ subplot(1,3,3);
+ title('Attention AT (align Dim)');
+ plotxLimits = [0 500];
+ PlotSpikeHistogram([plotData{5},plotData{4}],plotxLimits,histScale); % 
+ xlabel(attStr2);
+ 
+ resultData.fig1.text       = 'Visual and attention response align to dim';
+ resultData.fig1.plotdata.visual     = plotData{1};
+ resultData.fig1.plotdata.noVisual   = plotData{2};
+ resultData.fig1.plotdata.att        = plotData{3};
+ resultData.fig1.plotdata.noAtt      = plotData{4};
+ resultData.fig1.plotdata.atatt      = plotData{5};
+ resultData.fig1.plotdata.atnoAtt    = plotData{6};
 
-
+ clear plotData plotxLimits histScale
 %% Analyze the period after the first dimming for the attend out period
 % look at eye movement too
 
@@ -144,48 +210,26 @@ plotxLimits = [-1000 1000]; % just used for plotting
 timeArray=(-1000:2000); 
 alignEvent = NLX_event2num('NLX_DIMMING1');
 
-i=1;
-attendInData = validData([validData.rfDim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
+% select the data for each plot
+cellData{1} = validData([validData.rfDim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
+cellData{2} = validData([validData.rfDim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
+cellData{3} = validData([validData.rfDim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
+cellData{4} = validData([validData.out1Dim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
+cellData{5} = validData([validData.out1Dim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
+cellData{6} = validData([validData.out1Dim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
+cellData{7} = validData([validData.out2Dim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
+cellData{8} = validData([validData.out2Dim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
+cellData{9} = validData([validData.out2Dim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
+titleString = {'Att Rf, rfDim', 'Att Out1, rfDim', 'Att Out2, rfDim','Att Rf, Out1Dim', 'Att Out1, Out1Dim', 'Att Out2, Out1Dim','Att Rf, Out2Dim', 'Att Out1, Out2Dim', 'Att Out2, Out2Dim'};
 
-i=2;
-attendInData = validData([validData.rfDim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=3;
-attendInData = validData([validData.rfDim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=4;
-attendInData = validData([validData.out1Dim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=5;
-attendInData = validData([validData.out1Dim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=6;
-attendInData = validData([validData.out1Dim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=7;
-attendInData = validData([validData.out2Dim]'==1 & [validData.attend]'==1); % rf dims first, subject attend rf
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=8;
-attendInData = validData([validData.out2Dim]'==1 & [validData.attend]'==2); % rf dims first, subject attend Out1
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent); 
-
-i=9;
-attendInData = validData([validData.out2Dim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
-plotData{i} = GrcjDru1Histogram(attendInData,timeArray,alignEvent);
-
-
+% prepare the plot
+for i=1:9
+    plotData{i} = GrcjDru1Histogram(cellData{i},timeArray,alignEvent);
+end
 
 % plot the data 
 histScale = max( cellfun(@(r) r.maxHist, plotData) ); % get the maximum amplitude of the histogram
 figure('color',[1 1 1],'position', [100,100,900,700],'name',figName);
-titleString = {'Att Rf, rfDim', 'Att Out1, rfDim', 'Att Out2, rfDim','Att Rf, Out1Dim', 'Att Out1, Out1Dim', 'Att Out2, Out1Dim','Att Rf, Out2Dim', 'Att Out1, Out2Dim', 'Att Out2, Out2Dim'};
 for i=1:9
  subplot(3,3,i);
  title(titleString{i});
