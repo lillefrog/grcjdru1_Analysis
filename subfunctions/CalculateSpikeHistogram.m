@@ -96,7 +96,7 @@ end
 plotData.xSpikes = xPlot;
 plotData.ySpikes = yPlot;
 plotData.xHistogram = timeArray;
-plotData.yHistogram = mean(spikesSmooth);
+plotData.yHistogram = mean(spikesSmooth); % not normalized data
 plotData.maxHist = max(mean(spikesSmooth));
 plotData.xCue = xCueArray;
 plotData.yCue = yCueArray;
