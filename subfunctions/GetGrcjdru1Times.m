@@ -51,7 +51,7 @@ iutputStruct = inputStruct;
 function MMM = meanMaxMin(dataArray)
 MMM.min = min(dataArray);
 MMM.max = max(dataArray);
-MMM.mean = mean(dataArray);
+MMM.mean = nanmean(dataArray);
 
 
 function timeStamp = GetNlxTimeStamp(nlxArray,event)
