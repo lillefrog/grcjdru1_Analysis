@@ -1,5 +1,6 @@
 
 
+resultData = resultData2_cnqx;
 
 for i=1:length(resultData)
     dim_ND_Mod(i) = resultData{i}.dim_ND_Mod;
@@ -45,3 +46,8 @@ ModulationIndex = (NoDrug-Drug)./(NoDrug+Drug);
 hist(ModulationIndex,-0.9:0.1:0.9)
 axis('square')
 title('Dim Modulation');
+    [p,~]=signrank(ModulationIndex);
+    outtext=(['p(signrank): ', num2str(p, '%4.3f')]);
+    xlabel(outtext);
+    
+    
