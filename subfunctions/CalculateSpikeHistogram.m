@@ -19,13 +19,14 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 % plotData.xCue = x coordinates for all cue events
 % plotData.yCue = y coordinates for all cue events
 %
-% The histogram values are probably not scaled correctly!
+
+
 
 SLOW = true;
 CUE_ON =  20;
 %NLX_RECORD_END = 64;
 
-% konstants used for fitting the histogram
+% constants used for fitting the histogram
 sigma = 10;
 k1 = 1/(sigma*sqrt(2*pi));
 k2 = 2*sigma^2;
@@ -70,8 +71,8 @@ for i=1:length(xData)
 
         
        else % faster version of the interpolation (not that much faster)
-        spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
-        spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
+%         spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
+%         spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
        end
         
         % calclulate position of cue 
@@ -96,9 +97,10 @@ end
 plotData.xSpikes = xPlot;
 plotData.ySpikes = yPlot;
 plotData.xHistogram = timeArray;
-plotData.yHistogram = mean(spikesSmooth); % not normalized data
+plotData.yHistogram = mean(spikesSmooth); % not normalized data in spikes/ms (maybe)
 plotData.maxHist = max(mean(spikesSmooth));
 plotData.xCue = xCueArray;
 plotData.yCue = yCueArray;
+plotData.isNormalized = false;
 
 
