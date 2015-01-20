@@ -6,6 +6,7 @@ function data = AlignCtxAndNlxData(spikeArray,nlxEventfile,ctxData)
 
 nrTrials = length(ctxData);
 endTime = 0;
+offset = 0; % If a header is missing we might get a offset between NLX and CTX files
 
 for trial =1:nrTrials
     % check that we are not reading outside the NLX file and stop if we do
@@ -19,7 +20,11 @@ for trial =1:nrTrials
     ctxBlok = ctxData(trial).block;
     
     % read the block and condition from neuralynx
-    nlxEvents = nlxEventfile{trial}; 
+    if ((trial+offset)<(length(nlxEventfile)+1))
+        nlxEvents = nlxEventfile{trial+offset}; 
+    else
+        disp(['NlxEventFile has no more events, stopped at nlx trial=',num2str(trial+offset),' (ctx Trial=',num2str(trial),')']);
+    end
     [nlxBlock,nlxCond,nlxEventNoHeader,nlxHeaderFound] = ReadNlxHeader(nlxEvents);
     ctxData(trial).nlxHeaderFound = nlxHeaderFound;
     
@@ -31,14 +36,14 @@ for trial =1:nrTrials
     
     % Check if there are any spikes at all, if not we are probalbly outside
     % the area selected in the spike-sorting
-    ctxData(trial).hasSpikes = ~isempty(spikeArray{trial});
+    ctxData(trial).hasSpikes = ~isempty(spikeArray{trial+offset});
     
     % cortex start counting from 0 and neuralynx from 1, since matlab also
     % likes to start from one I add one to the cortex values to align them.
     if ((nlxBlock==ctxBlok+1) && (nlxCond==ctxCond+1))
         % add the events and the spikes to the ctxData
         ctxData(trial).nlxEvents = nlxEventNoHeader;
-        ctxData(trial).nlxSpikes = spikeArray{trial}; 
+        ctxData(trial).nlxSpikes = spikeArray{trial+offset}; 
     elseif (nlxBlock==-1)
         if nlxHeaderFound
            disp(['nlx header corrupted in trial: ',num2str(trial)]); 
@@ -48,15 +53,33 @@ for trial =1:nrTrials
         % add the events and the spikes to the ctxData anyway assuming the
         % header is just corrupted
         ctxData(trial).nlxEvents = nlxEventNoHeader;
-        ctxData(trial).nlxSpikes = spikeArray{trial};
+        ctxData(trial).nlxSpikes = spikeArray{trial+offset};
     else
-        % if they really are not aligned we raise the error for that trial
-        % the clever thing would be to check if the next trial can be
-        % aligned (todo). until then we just add the data anyway
+        % if they really are not aligned we try to align the data by
+        % looking trough all possible NLX trial to see if one of them fits.
+        % If we find one we go on from there
+        
+        for i=1:length(nlxEventfile)
+            [nlxBlock,nlxCond,nlxEventNoHeader,nlxHeaderFound] = ReadNlxHeader( nlxEventfile{i} );
+            %disp([num2str(nlxBlock),' ',num2str(nlxCond)])
+            if ((nlxBlock==ctxBlok+1) && (nlxCond==ctxCond+1))
+                offset = i-trial;
+                Alignment = true;
+                disp('Aligned');
+                break;
+            else
+                Alignment = false;
+            end
+        end
+         
         ctxData(trial).nlxEvents = nlxEventNoHeader;
         ctxData(trial).nlxSpikes = spikeArray{trial};
-        disp(['nlx not aligned with ctx file in trial: ',num2str(trial)]);
-        ctxData(trial).error = true;
+        
+        if ~Alignment
+            disp(['nlx not aligned with ctx file in trial:: ',num2str(trial)]);
+            disp(['CTX= ',num2str(ctxBlok+1),' ',num2str(ctxCond+1),' NLX= ',num2str(nlxBlock),' ',num2str(nlxCond)]);
+            ctxData(trial).error = true;
+        end
     end
        
 end
