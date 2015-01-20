@@ -95,7 +95,10 @@ for i=1:size(plotData,2)
         setup.spikeShift = setup.spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
 
         raster_handle = line(A,B,'Color',spikeColor); % plot spikes
+    else
+        ylim([0 100]);
     end
+    
     
     % don't show a legend for the rasters
 %     hAnnotation = get(raster_handle,'Annotation');
@@ -109,7 +112,14 @@ end
 % I'm not sure if this scale actually means anything
 %set(gca,'YTick',[0 100],'YTicklabel',[0 round(histScale*1000)],'ticklength',[0.02 0.02]);
 set(gca,'YTick',[0 100]); % show only 2 yTick marks one at 0 and one at 100
-set(gca,'YTicklabel',[0 round((histScale*1000)/sumOfFiles)]);
+%disp('----');
+%disp(histScale)
+%disp(sumOfFiles)
+if( isfield(plotData, 'isNormalized') && plotData(1).isNormalized)
+    set(gca,'YTicklabel',[0 round((histScale*1))]); % normalized from 0-1
+else
+    set(gca,'YTicklabel',[0 round((histScale*1000))]); % spikes pr sec from sp/mS
+end
 set(gca,'ticklength',[0.02 0.02]);
 set(gca,'color','none'); % remowe the background from subplots so they can be closer together (still can't overlap
 
