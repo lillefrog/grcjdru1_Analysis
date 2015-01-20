@@ -2,7 +2,7 @@ function [iutputStruct,summary] = GetGrcjdru1Times(inputStruct)
 % Function for extracting all the times for different delays from the data
 % files. f.eks. pre cue delay. It returns the delays for both the
 % individual trials and the total experiment.
-% it should be quite robust since it just returns NaN for any value it cant
+% it should be quite robust since it just returns NaN for any value it can't
 % calculate. Be sure to prapare for this if you are using the output of
 % this function.
 
@@ -55,10 +55,13 @@ MMM.mean = nanmean(dataArray);
 
 
 function timeStamp = GetNlxTimeStamp(nlxArray,event)
-
-eventPos = find(nlxArray(:,2)==NLX_event2num(event),1,'first'); % find event
-if ~isempty(eventPos)
-    timeStamp = nlxArray(eventPos,1)/1000;
+if ~isempty(nlxArray)
+    eventPos = find(nlxArray(:,2)==NLX_event2num(event),1,'first'); % find event
+    if ~isempty(eventPos)
+        timeStamp = nlxArray(eventPos,1)/1000;
+    else
+        timeStamp = NaN;
+    end
 else
     timeStamp = NaN;
 end
