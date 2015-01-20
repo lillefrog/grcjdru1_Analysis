@@ -30,6 +30,7 @@ for i=1:length(dataStructure)
     groupNamesL = length(groupNames);
     groups = cell(groupNamesL,dataL);
     for k=1:groupNamesL 
+        %fieldnames(dataStructure{i})
         if isnumeric(dataStructure{i}.(groupNames{k}))
            groups(k,:) = {num2str(dataStructure{i}.(groupNames{k}))};
         else
