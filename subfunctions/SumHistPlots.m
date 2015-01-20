@@ -36,6 +36,8 @@ for i=1:9     % go trough all possible figures (only 9 so far)
             %divide with number of files
             for m = 1:length(tempSumData)
                 tempSumData(m).yHistogram = tempSumData(m).yHistogram / tempSumData(m).sumOffiles;
+                tempSumData(m).sumOffiles = 1;
+                tempSumData(m).isNormalized = true;
             end
             
             % transfer the data to the output variable
