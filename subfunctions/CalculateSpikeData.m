@@ -41,13 +41,11 @@ for i=1:length(xData)
     if ~isempty(alignEventPos) % skip trials that dont have a start event
         alignTime = events(alignEventPos,1); % get the time for that event
         spikes = (spikes - alignTime)/1000; % recalculate to mS
-        select = spikes>timeRange(1) & spikes<timeRange(2); 
-        selectedSpikes = spikes(select);
+        select = spikes>timeRange(1) & spikes<timeRange(2); % find the spikes in our timerange
+        selectedSpikes = spikes(select); % Select the spikes
         
-       
-            
         % calculate interspike interval
-        nSelectedSpikes = length(selectedSpikes);
+        nSelectedSpikes = length(selectedSpikes); % count the selected spikes
         if nSelectedSpikes>1
             totalInterSpikeTime = totalInterSpikeTime + sum(selectedSpikes(2:end)-selectedSpikes(1:end-1)); % Add all interspike intervals together
             nInterSpike = nInterSpike + nSelectedSpikes; % Keep track of the number of interspike intervals 
@@ -57,7 +55,7 @@ for i=1:length(xData)
         spikeBinArr(:,i) = tt;
         
         
-        nrSpikes(i) = sum(select);
+        nrSpikes(i) = sum(select); % store the number of spikes for the trial
     else
         nrSpikes(i) = NaN;
     end
@@ -66,7 +64,7 @@ end
 
 spikeMeanArr = mean(spikeBinArr,2);
 spikeVarArr = var(spikeBinArr,0,2);
-FF = spikeVarArr./spikeMeanArr;
+FF = spikeVarArr./spikeMeanArr; % calculate Fano Factor
 FF(spikeVarArr==0) = 1;  % if there are no spikes the variance is 0 and the result is undefined but it is really 1 
 
 duration = timeRange(2) - timeRange(1);
