@@ -1,6 +1,6 @@
 
 
-resultData = resultData2_cnqx;
+resultData = resultData_apv;
 
 for i=1:length(resultData)
     dim_ND_Mod(i) = resultData{i}.dim_ND_Mod;
@@ -11,7 +11,24 @@ for i=1:length(resultData)
    
     stim_ND_Mod(i) = resultData{i}.stim_ND_Mod;
     stim_D_Mod(i) = resultData{i}.stim_D_Mod;
+    
+    pValues(i,1) =    resultData{i}.classification1.attention.pValue;
+    pValues(i,2) =    resultData{i}.classification1.drug.pValue;
+    pValues(i,3) =    resultData{i}.classification1.visual.pValue;
 end
+
+% select data
+
+
+pAtt = 0.05;
+pDrug = 0.05;
+pVis = 0.05;
+
+selected = ( pValues(:,1)<pAtt ) & ( pValues(:,2)<pDrug ) & ( pValues(:,3)<pVis );
+
+pValues = pValues(selected,:);
+
+
 
 %% Plot Attentional Modulation
 figure('color',[1 1 1],'position', [150,150,1500,400],'name','Attentional Modulation');
