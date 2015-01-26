@@ -10,15 +10,24 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,setup)
 %   histScale: The maximum possible value for the histogram, it is used to
 %       scale the histograms.
 %   setup: 
-%       spikeshift is optional and sets where to start plotting the spikes. It
-%       should always be 100.
+%       .spikeshift is optional and sets where to start plotting the spikes. It
+%           should always be 100.
+%       .showSpikes decides if we want to see the spikes or not
+%       .showHistos show the histograms
+%       .smoothHisto Apply extra smoothing to the histograms, there is
+%           always some smoothing included in the data
+%       .showError Show standart error of the mean if avalible
+%       .show95Confidence show 95% confidence intervals, if set to true it
+%           overrides the showError setting
 
 
- % default setup
+ % default setup these will be used unless overwritten
  defaultSetup.spikeShift = 100;
  defaultSetup.showSpikes = true;
  defaultSetup.showHistos = true;
  defaultSetup.smoothHisto = true;
+ defaultSetup.showError = false;
+ defaultSetup.show95Confidence = false;
 
  if nargin<4 || ~exist('setup','var')
      % if no setup is supplied use the default
@@ -28,13 +37,9 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,setup)
     setup = CombineStructures(setup,defaultSetup);
  end
 
-
-
 % initialize
 figHandle = gcf;
 hold on
-
-
 
 for i=1:size(plotData,2)    
   if(size(plotData(i).ySpikes,1)>0)  % check if there are any spike to plot  
@@ -63,12 +68,7 @@ for i=1:size(plotData,2)
         histColor = plotData(i).histColor ;
     end
     
-    if isfield(plotData,'sumOffiles')
-        sumOfFiles = plotData(i).sumOffiles;
-    else
-        sumOfFiles = 1;
-    end
- % plot the histogram
+    % plot the histogram
     if setup.smoothHisto
         histogram = (gaussfit(30,0,plotData(i).yHistogram)/(histScale))*100; % smoothe the histogram
     else
@@ -76,45 +76,50 @@ for i=1:size(plotData,2)
     end
     
     if setup.showHistos
-        plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
+        if setup.show95Confidence
+            errorbars = (plotData(i).yHistogramSEM/histScale) * 100 * 1.96; % 95% confidence interval;
+            PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);
+        elseif setup.showError
+            errorbars = (plotData(i).yHistogramSEM/histScale) * 100; % we plot on a scale from 0 to 100
+            PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);            
+        else
+            plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
+        end  
     end
 
- % plot the spike data
-    % reorganize the spike data to line coordinates
+    % plot the spike data
     if setup.showSpikes
-        xPlot = plotData(i).xSpikes;
+        % reorganize the spike data to line coordinates
+        xPlot = plotData(i).xSpikes; % X coordinates
         xNaNs = nan(size(xPlot));
         x2 = [xPlot;xPlot;xNaNs];
         A = reshape(x2,1,[]);    
 
-        yPlot = plotData(i).ySpikes;
+        yPlot = plotData(i).ySpikes; % Y coordinates
         yNaNs = nan(1,length(yPlot));
         y2 = [yPlot;yPlot+1;yNaNs]; 
         B = reshape(y2,1,[]) + setup.spikeShift;
 
         setup.spikeShift = setup.spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
 
-        raster_handle = line(A,B,'Color',spikeColor); % plot spikes
+        line(A,B,'Color',spikeColor); % plot spikes
     else
         ylim([0 100]);
     end
     
     
     % don't show a legend for the rasters
-%     hAnnotation = get(raster_handle,'Annotation');
-%     hLegendEntry = get(hAnnotation','LegendInformation');
-%     set(hLegendEntry,'IconDisplayStyle','off');
+    %     hAnnotation = get(raster_handle,'Annotation');
+    %     hLegendEntry = get(hAnnotation','LegendInformation');
+    %     set(hLegendEntry,'IconDisplayStyle','off');
   else
     disp('No spikes in some conditions, These conditions will not be plotted');  
   end
 end
     
 % I'm not sure if this scale actually means anything
-%set(gca,'YTick',[0 100],'YTicklabel',[0 round(histScale*1000)],'ticklength',[0.02 0.02]);
 set(gca,'YTick',[0 100]); % show only 2 yTick marks one at 0 and one at 100
-%disp('----');
-%disp(histScale)
-%disp(sumOfFiles)
+
 if( isfield(plotData, 'isNormalized') && plotData(1).isNormalized)
     set(gca,'YTicklabel',[0 round((histScale*1))]); % normalized from 0-1
 else
@@ -125,3 +130,56 @@ set(gca,'color','none'); % remowe the background from subplots so they can be cl
 
 xlim(xLimits);
 hold off
+
+
+function PlotwithErrorbars(X,Y,Err,varargin)
+% you might want to be sure hold in on before using this function?
+
+% set how much lighter the error area compared to the main line
+dimLevel = 0.65; % higher is lighter
+
+% find the plot color, we need this to set the color for the error area    
+index = find(strcmp(varargin, 'Color'));
+if ~isempty(index)
+    mainColor = varargin{index+1};
+    dimColor = mainColor + (1-mainColor) * dimLevel;
+else
+    error('No Line color selected in PlotSpikeHistogram');
+end
+
+% find the plot linewidth    
+index = find(strcmp(varargin, 'LineWidth'));
+if ~isempty(index)
+    mainLineWidth = varargin{index+1};
+else
+    mainLineWidth = 1;
+end
+
+% upper and lower border of the error patch
+upperError = Y + Err;
+lowerError = Y - Err;
+
+% convert line to circumfence of patch
+yPatch = [lowerError, fliplr(upperError)];
+xPatch = [X, fliplr(X)];
+
+% remove NaNs just in case
+xPatch(isnan(yPatch))=[];
+yPatch(isnan(yPatch))=[];
+
+% plot the error area
+zPatch = ones(size(yPatch))*(-0.01); % add a small z value to push the patch behind the rest of the plot
+H.patch=patch(xPatch,yPatch,zPatch,1,'facecolor',dimColor,'edgecolor','none');          
+
+% plot the main line
+plot(X, Y, 'Color',mainColor,'LineWidth',mainLineWidth);
+
+
+
+
+
+
+
+
+
+
