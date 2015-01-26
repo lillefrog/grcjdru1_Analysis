@@ -62,7 +62,7 @@ for i=1:length(xData)
 end
 
 
-spikeMeanArr = mean(spikeBinArr,2);
+spikeMeanArr = nanmean(spikeBinArr,2);
 spikeVarArr = var(spikeBinArr,0,2);
 FF = spikeVarArr./spikeMeanArr; % calculate Fano Factor
 FF(spikeVarArr==0) = 1;  % if there are no spikes the variance is 0 and the result is undefined but it is really 1 
@@ -72,7 +72,7 @@ duration = timeRange(2) - timeRange(1);
 rateData.nrSpikes = nrSpikes; % must be first
 rateData.duration = duration;
 
-rateData.meanSpikeNr = mean(nrSpikes);
+rateData.meanSpikeNr = nanmean(nrSpikes);
 rateData.stdSpikeNr = std(nrSpikes);
 rateData.maxSpikeNr = max(nrSpikes);
 rateData.minSpikeNr = min(nrSpikes);
