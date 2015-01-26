@@ -25,27 +25,34 @@ function plotData = GrcjDru1Histogram(data,timeArray,alignEvent,offset)
      end
      %elseif strcmp(class(offset),'struct') % in case I want to expand the function       
  end
-disp(offset);
+% disp(offsetNoDrug);
+% disp(offsetDrug);
  
 DataDrug   = data(  [data.drug]' );
 DataNoDrug = data( ~[data.drug]' );
 
-[plot_DataDrug] = CalculateSpikeHistogram(DataDrug,timeArray,alignEvent); < Add here
+[plot_DataDrug] = CalculateSpikeHistogram(DataDrug,timeArray,alignEvent);
 [plot_DataNoDrug] = CalculateSpikeHistogram(DataNoDrug,timeArray,alignEvent);
 
 plot_DataDrug.name = 'drug';
 plot_DataDrug.lineWidth = 2;
 plot_DataDrug.spikeColor = [0 0 0];
 plot_DataDrug.histColor = [0 0 0];
-plot_DataDrug.yHistogram = plot_DataDrug.yHistogram - offset;
+plot_DataDrug.yHistogram = plot_DataDrug.yHistogram - (offsetDrug/1000);
 
+if isnan(plot_DataDrug.yHistogram)
+    error('GrcjDru1Histogram returns NaN for Drug condition');
+end
 
 plot_DataNoDrug.name = 'control';
 plot_DataNoDrug.lineWidth = 1;
 plot_DataNoDrug.spikeColor = [0.3 0.3 0.3];
 plot_DataNoDrug.histColor = [0.3 0.3 0.3];
-plot_DataNoDrug.yHistogram = plot_DataNoDrug.yHistogram - offset;
+plot_DataNoDrug.yHistogram = plot_DataNoDrug.yHistogram - (offsetNoDrug/1000);
 
+if isnan(plot_DataNoDrug.yHistogram)
+  error('GrcjDru1Histogram returns NaN for No Drug condition');
+end
 
 % Find the maximum amplitude for both blots and set that as the max for
 % both
