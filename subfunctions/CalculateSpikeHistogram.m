@@ -39,11 +39,6 @@ xCueArray = [];
 yCueArray = [];
 yValue = 0;
 
-% if  alignEvent == NLX_event2num('NLX_SACCADE_START')
-%     isSaccade = true;
-% else
-%     isSaccade = false;
-% end
 
 
 for i=1:length(xData)
@@ -61,7 +56,7 @@ for i=1:length(xData)
         
         spikes = (spikes - alignTime)/1000; % recalculate to mS
         
-       if SLOW 
+
         % this function smoothes out each spike so it counts in several
         % bins. It works like a form of interpolation        
         for j=1:length(spikes)
@@ -69,11 +64,6 @@ for i=1:length(xData)
             spikesSmooth(i,:) = spikesSmooth(i,:) + sp1;
         end
 
-        
-       else % faster version of the interpolation (not that much faster)
-%         spikesSmooth(i,:) = gaussfit(30,0,histc(spikes,timeArray));
-%         spikesSmooth(i,:) = gaussfit(30,0,spikesSmooth(i,:));
-       end
         
         % calclulate position of cue 
         cueEventPos = find(events(:,2) == CUE_ON,1,'last'); % find the position of the cue  
@@ -92,13 +82,24 @@ for i=1:length(xData)
     end
 end
 
+
+if isempty(xData)
+    spikesSmooth = zeros(1,length(timeArray));
+end
+
+avarageSpikecount = mean(spikesSmooth);
+if isnan(avarageSpikecount) % can probably be removed, we check this later 
+    error('CalculateSpikeHistogram returns NaN');
+end
+
 % set return values, you can add more without breaking anything as long as
-% you don't remove any. I plan to add SD and the like. 
+% you don't remove any.
 plotData.xSpikes = xPlot;
 plotData.ySpikes = yPlot;
 plotData.xHistogram = timeArray;
-plotData.yHistogram = mean(spikesSmooth); % not normalized data in spikes/ms (maybe)
-plotData.maxHist = max(mean(spikesSmooth));
+plotData.yHistogram = avarageSpikecount; % not normalized data in spikes/ms (maybe)
+plotData.yHistogramSEM = std(spikesSmooth);
+plotData.maxHist = max(avarageSpikecount);
 plotData.xCue = xCueArray;
 plotData.yCue = yCueArray;
 plotData.isNormalized = false;
