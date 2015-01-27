@@ -13,11 +13,23 @@ for i=1:length(resultData)
     stim_D_Mod(i) = resultData{i}.stim_D_Mod;
     
     pValues(i,1) =    resultData{i}.classification1.attention.pValue;
-    pValues(i,2) =    resultData{i}.classification1.drug.pValue;
-    pValues(i,3) =    resultData{i}.classification1.visual.pValue;
+    pValues(i,2) =    resultData{i}.classification2.attention.pValue;
+    pValues(i,3) =    resultData{i}.classification1.drug.pValue;
+    pValues(i,4) =    resultData{i}.classification2.drug.pValue;
+    pValues(i,5) =    resultData{i}.classification1.visual.pValue;  
 end
 
 % select data
+
+hold on
+plot(-log(pValues(:,1)),-log(pValues(:,2)),'or')
+plot(-log(pValues(:,3)),-log(pValues(:,4)),'ob')
+xlabel('MyClassification');
+ylabel('AlexClassification');
+axis([0 100 0 100]);
+hold off
+
+
 
 
 pAtt = 0.05;
@@ -25,6 +37,7 @@ pDrug = 0.05;
 pVis = 0.05;
 
 selected = ( pValues(:,1)<pAtt ) & ( pValues(:,2)<pDrug ) & ( pValues(:,3)<pVis );
+
 
 pValues = pValues(selected,:);
 
