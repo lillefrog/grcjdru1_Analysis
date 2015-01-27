@@ -41,6 +41,7 @@ for i=1:length(dataStructure)
     dataArray = [dataArray, data];
 end
 
+
 % Fiddle with the arrays so they fit anovan's sick prefrences
 bigArray = bigArray';
 groupings = cell(1,groupNamesL); % initialize
