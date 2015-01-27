@@ -248,6 +248,31 @@ resultData.classification1.attention.percent = (attResponse/preStim.meanSpikeRat
 
 clear plotData  plotxLimits analyzeTimeRange
 
+%% stastical classification of cells "classification2" (classic)
+event =     {'NLX_CUE_ON' 'NLX_STIM_ON' 'NLX_DIMMING1'};
+timeRange = [100, 400;    100, 400;     -500, 0       ];
+
+anovaData = cell(1,6);
+time = 3;
+for dir = [-1 1] % directions
+    alignEvent = NLX_event2num(event{time}); 
+    for drug = 0:1 % go trough
+        for att = 1:3
+            tempData = validData([validData.rfDim]'==1 & [validData.attend]'==att & [validData.drug]'==drug & [validData.stimDirection]'==dir);
+            spikeData = CalculateSpikeData(tempData,timeRange(time,:),alignEvent); 
+            spikeData.drug = drug; spikeData.attend = att; spikeData.dir = dir;
+            anovaData{(dir==1)*6+drug*3+att} = spikeData;
+        end
+    end
+end
+
+[p] = GroupAnovan(anovaData,'nrSpikes',{'drug','attend','dir'},'model','full','display','off'); %,'display','off'
+
+resultData.classification2.drug.pValue = p(1); % drug effect
+resultData.classification2.attention.pValue = p(2); % attention
+resultData.classification2.direction.pValue = p(3); % direction of grating
+resultData.classification2.interaction.pValue = p(4); % drug*att
+
 
 %% Analysis of cell type (Visual / Attention / Buildup)
 
