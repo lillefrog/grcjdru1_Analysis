@@ -21,8 +21,6 @@ function [plotData] = CalculateSpikeHistogram(xData,timeArray,alignEvent)
 %
 
 
-
-SLOW = true;
 CUE_ON =  20;
 %NLX_RECORD_END = 64;
 
