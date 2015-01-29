@@ -61,7 +61,6 @@ for trial =1:nrTrials
         
         for i=1:length(nlxEventfile)
             [nlxBlock,nlxCond,nlxEventNoHeader,nlxHeaderFound] = ReadNlxHeader( nlxEventfile{i} );
-            %disp([num2str(nlxBlock),' ',num2str(nlxCond)])
             if ((nlxBlock==ctxBlok+1) && (nlxCond==ctxCond+1))
                 offset = i-trial;
                 Alignment = true;
@@ -108,7 +107,9 @@ NLX_TRIALPARAM_END    = 252;
        if((last-first)==4) % if the length is correct
          block = nlxEventFile(first+1,2); 
          condition = nlxEventFile(first+2,2);
-       else % if the length is wrong
+       elseif((last-first)==5)
+         [block,condition] = CleanCorruptedHeader(nlxEventFile((first+1):(last-1),2));
+       else % if the length is more wrong :D
          condition = -1;
          block = -1;
        end
@@ -123,3 +124,34 @@ NLX_TRIALPARAM_END    = 252;
        headerFound = false;
    end
    
+function [block,condition] = CleanCorruptedHeader(header)
+% this function will try to save a corrupted header. In almost all cases 
+% any new values added to the header will either be too large or too small
+% so we try to remove those and check if we have a valid header.
+
+% set defaults
+condition = -1;
+block = -1;
+
+% remove all values that are either too big or small
+keep = ((header>0) & (header<150));
+header = header(keep);
+
+%check if we have a valid header
+if length(header)==3
+    checksum = 36*(header(1)-1)+header(2);
+    if checksum== header(3)
+        block = header(1);
+        condition = header(2);
+    end
+end
+
+% we could try to find out whitch value is wrong by using the check sum but
+% the number of trials that would save is very small 
+        
+
+        
+        
+        
+        
+        
