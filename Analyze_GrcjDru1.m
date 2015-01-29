@@ -66,12 +66,20 @@ ctxData = CleanCtxGrcjdru1Events(ctxDataTemp); % read the cortex header/trial in
 ctxData = GetCtxReactionTime(ctxData); % get the best possible reaction times from all sources
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
 
+% dataArrOut = SwitchReceptiveField(dataArrIn,newOrder)
+
 [allData,summary] = GetGrcjdru1Times(allData); % get the timings from nlx events
 resultData.trailSummary = summary; % save the symmary timings from nlx events
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 
 % read the ini file if it exist
 resultData.iniValues = ReadINI(iniFileName);
+
+% replace the RF if it is in the wrong place (this is set in the inifile)
+% if (isfield(resultData.iniValues, 'recording') && isfield(resultData.iniValues.recording, 'replaceRF'))
+%     allData = SwitchReceptiveField( allData, resultData.iniValues.recording.replaceRF );
+% end
+
 
 %% select what to Analyze. This is the place where we select the overall trials to use.
 % some selection might go on it the analysis
@@ -267,6 +275,11 @@ for dir = [-1 1] % directions
 end
 
 [p] = GroupAnovan(anovaData,'nrSpikes',{'drug','attend','dir'},'model','full','display','off'); %,'display','off'
+
+
+if isnan(p)
+    warning('Anova Analysis returns NaN, probably caused by lack of data');
+end
 
 resultData.classification2.drug.pValue = p(1); % drug effect
 resultData.classification2.attention.pValue = p(2); % attention
