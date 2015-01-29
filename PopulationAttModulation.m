@@ -16,7 +16,8 @@ for i=1:length(resultData)
     pValues(i,2) =    resultData{i}.classification2.attention.pValue;
     pValues(i,3) =    resultData{i}.classification1.drug.pValue;
     pValues(i,4) =    resultData{i}.classification2.drug.pValue;
-    pValues(i,5) =    resultData{i}.classification1.visual.pValue;  
+    pValues(i,5) =    resultData{i}.classification1.visual.pValue; 
+    pValues(i,6) =    resultData{i}.classification2.interaction.pValue;
 end
 
 % select data
