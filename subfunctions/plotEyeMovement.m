@@ -24,16 +24,17 @@ else
     warning('Wrong input');
 end
 
-START_EYE_DATA = 100;
-END_EYE_DATA   = 101;
+% START_EYE_DATA = 100;
+% END_EYE_DATA   = 101;
 
 
-AllTrials = dataArray{1}.data;
+AllTrials = dataArray{11}.data;
 goodTrials = AllTrials([AllTrials.correctTrial] == 1);
 
 meanArray = nan(length(goodTrials),10000);
+attendArray = zeros(length(goodTrials),1);
 
-hold on
+hold on % remove this if we don't plot in the loop 
 for i=1:length(goodTrials)
 
 
@@ -42,10 +43,11 @@ for i=1:length(goodTrials)
     EyeArrayX = currentEyeArray(1:2:end);
     EyeArrayY = currentEyeArray(2:2:end);
 
+    % check where the subject is attending
+    attendArray(i) = goodTrials(i).attend;
+    
     % Get the timing of the events during the trial
     currentEventArray = goodTrials(i).eventArray; 
-    %disp(['Trial ',num2str(i)]);
-    %disp(currentEventArray)
     startEvent = currentEventArray(:,2)==CTX_event2num('START_EYE_DATA'); % get the start time of the eye tracking
     startTime = currentEventArray(startEvent,1);
     endEvent = currentEventArray(:,2)==CTX_event2num('END_EYE_DATA'); % get the end time of the eye tracking
@@ -57,9 +59,12 @@ for i=1:length(goodTrials)
     fixOffEvent =   currentEventArray(:,2)==CTX_event2num('STIM_ON');
     fixOffTime = currentEventArray(fixOffEvent,1);
     
+    %TODO check that the events exist !!
+    %TODO split the trials depending on the attend state
+    %TODO Find a way to look at direction and not only eccentricity
+    
+    
     % Align the timestamps to the align event 
-    
-    
     timeStamps = linspace(startTime,endTime,length(EyeArrayX));
     baseline = (timeStamps>fixOnTime(1)) & (timeStamps<fixOffTime(1));
     timeStamps = timeStamps - alignTime(1);
@@ -77,23 +82,34 @@ for i=1:length(goodTrials)
     
     excentricity = sqrt(EyeArrayX.^2 + EyeArrayY.^2);
     meanArray(i,1+zeroPos:length(excentricity)+zeroPos)  = excentricity;
-    % add line to plot
     
-%     plot(timeStamps,EyeArrayX,'-b');
-%     
-%     plot(timeStamps,EyeArrayY,'-r');
-
-    plot(timeStamps,excentricity,'-r');
+    % add line to plot
+    % plot(timeStamps,excentricity,'-r');
     
 
 % pause
 
 end
-summary = nanmean(meanArray);
+
+meanArrayAtt1 = meanArray(attendArray==1,:);
+
+summary = nanmean(meanArrayAtt1);
+summarystd = nanstd(meanArrayAtt1);
 timeLine2 = linspace(-20000,20000,10000);
 plot(timeLine2,summary,'-k')
+plot(timeLine2,summary+summarystd,'-k')
+plot(timeLine2,summary-summarystd,'-k')
 
-hold off
+meanArrayAtt2 = meanArray(attendArray==2,:);
+summary = nanmean(meanArrayAtt2);
+summarystd = nanstd(meanArrayAtt2);
+timeLine2 = linspace(-20000,20000,10000);
+plot(timeLine2,summary,'-b')
+plot(timeLine2,summary+summarystd,'-b')
+plot(timeLine2,summary-summarystd,'-b')
+
+
+hold off % remove this if we don't plot in the loop 
 %ylim([-10 1000]);
 
 
