@@ -10,6 +10,7 @@ section = 'default'; % if there is no section name this will be used
 fid = fopen(fName); % Open the file 
 
 if fid~=-1
+    C = onCleanup(@()fclose(fid)); % add the filename to the cleanup list
     values.INIfileFound = true;
     tline = fgetl(fid); % get the first line of text
     % run trough all the lines in the file one at a time
@@ -37,7 +38,7 @@ if fid~=-1
         end
         tline = fgetl(fid); % get a new line of text
     end
-    fclose(fid); % close file
+    %fclose(fid); % close file
 else
     values.INIfileFound = false;
 end
