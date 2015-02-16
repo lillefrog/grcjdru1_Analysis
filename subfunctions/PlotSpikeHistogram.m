@@ -107,11 +107,6 @@ for i=1:size(plotData,2)
         ylim([0 100]);
     end
     
-    
-    % don't show a legend for the rasters
-    %     hAnnotation = get(raster_handle,'Annotation');
-    %     hLegendEntry = get(hAnnotation','LegendInformation');
-    %     set(hLegendEntry,'IconDisplayStyle','off');
   else
     disp('No spikes in some conditions, These conditions will not be plotted');  
   end
