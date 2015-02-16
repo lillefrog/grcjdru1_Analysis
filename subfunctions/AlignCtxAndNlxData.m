@@ -47,8 +47,10 @@ for trial =1:nrTrials
     elseif (nlxBlock==-1)
         if nlxHeaderFound
            disp(['nlx header corrupted in trial: ',num2str(trial)]); 
+           %disp(nlxEvents(:,2)');
         else
            disp(['nlx header missing in trial: ',num2str(trial)]);
+           %disp(nlxEvents(:,2)');
         end
         % add the events and the spikes to the ctxData anyway assuming the
         % header is just corrupted
@@ -56,15 +58,19 @@ for trial =1:nrTrials
         ctxData(trial).nlxSpikes = spikeArray{trial+offset};
     else
         % if they really are not aligned we try to align the data by
-        % looking trough all possible NLX trial to see if one of them fits.
-        % If we find one we go on from there
+        % looking trough the surronding nlx trials to find one with
+        % matching values. We limit the search to avoid getting into the
+        % next or previous cycles since they will have false alingments
         
-        for i=1:length(nlxEventfile)
+        
+        searchStart = max(1 , (trial-50)); % search from 50 trials before current trial
+        searchFinish = min(length(nlxEventfile) , (trial+50)); % search to 50 trials after current trial
+        for i=searchStart:searchFinish
             [nlxBlock,nlxCond,nlxEventNoHeader,nlxHeaderFound] = ReadNlxHeader( nlxEventfile{i} );
             if ((nlxBlock==ctxBlok+1) && (nlxCond==ctxCond+1))
                 offset = i-trial;
                 Alignment = true;
-                disp('Aligned');
+                disp(['ReAligned Block=',num2str(nlxBlock),' Cond=',num2str(nlxCond),' Trial=',num2str(trial),' Trials Shifted=',num2str(i-trial)]);
                 break;
             else
                 Alignment = false;
@@ -138,12 +144,22 @@ keep = ((header>0) & (header<150));
 header = header(keep);
 
 %check if we have a valid header
-if length(header)==3
+if length(header)==3 % if we now have the correct length
     checksum = 36*(header(1)-1)+header(2);
     if checksum== header(3)
         block = header(1);
         condition = header(2);
     end
+elseif length(header)==4 % if it still is too long
+    checksum = 36*(header(1)-1)+header(2);
+    if checksum== header(3) % check if the 3th value is the checksum
+        block = header(1);
+        condition = header(2);
+    elseif checksum== header(4)  % check if the 4th value is the checksum
+        block = header(1);
+        condition = header(2);     
+    end
+    
 end
 
 % we could try to find out whitch value is wrong by using the check sum but
