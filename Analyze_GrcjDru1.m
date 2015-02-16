@@ -12,7 +12,7 @@ function [resultData] = Analyze_GrcjDru1(spikeFileName,selectedCell,cellSorting)
 % Requirements:
 %   All functions in grcjdru1_Analysis folder
 
-SHOWPLOTS = true; % set this to false if you just want the data without graphs
+SHOWPLOTS = false; % set this to false if you just want the data without graphs
 close all
 
 %% Load data from files
@@ -75,6 +75,11 @@ clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 % read the ini file if it exist
 resultData.iniValues = ReadINI(iniFileName);
 
+% check for drift of the activity
+[driftRval,driftPval] = calculateDrift(allData);
+resultData.driftRval = driftRval;
+resultData.driftPval = driftPval;
+
 % replace the RF if it is in the wrong place (this is set in the inifile)
 % if (isfield(resultData.iniValues, 'recording') && isfield(resultData.iniValues.recording, 'replaceRF'))
 %     allData = SwitchReceptiveField( allData, resultData.iniValues.recording.replaceRF );
@@ -82,7 +87,8 @@ resultData.iniValues = ReadINI(iniFileName);
 
 
 %% select what to Analyze. This is the place where we select the overall trials to use.
-% some selection might go on it the analysis
+% some selection might go on in the analysis but this is the general
+% selection
 
 isError      = [allData.error]';  % did the program find any errors 
 isCorrect    = [allData.correctTrial]'; % did the monkey complete the task
@@ -93,6 +99,7 @@ validData    = allData(validTrials);
 
 
 resultData.data = validData;
+resultData.data = allData; 
 resultData.spikeFileName = spikeFileName;
 resultData.eventFilename = eventFilename;
 resultData.cortexFilename = cortexFilename;
@@ -108,11 +115,11 @@ clear isError isCorrect targetDim validTrials allData
 figName = 'Modulation'; 
 
 % get the baseline firing rate
-analyzeTimeRange = [-300,0]; % Range to analyze
+analyzeTimeRange = [-100,0]; % Range to analyze
 alignEvent = NLX_event2num('NLX_CUE_ON');
-tempData = validData( [validData.rfDim]'==1  & [validData.drug]'~=1 ); % rf dims first, subject attend Out1 & Out2
+tempData = validData([validData.drug]'~=1 ); % rf dims first, no drug
 preCueNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData( [validData.rfDim]'==1  & [validData.drug]'==1 ); % rf dims first, subject attend Out1 & Out2
+tempData = validData([validData.drug]'==1 ); % rf dims first, drug
 preCueDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 
 
@@ -120,37 +127,37 @@ preCueDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 % stim
 analyzeTimeRange = [50,350]; % Range to analyze
 alignEvent = NLX_event2num('NLX_STIM_ON');
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
 stimAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'~=1 & [validData.drug]'~=1); % does not have to be so strict
 stimNoAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData([validData.attend]'==1 & [validData.drug]'==1); % does not have to be so strict
 stimAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData([validData.attend]'~=1 & [validData.drug]'==1); % does not have to be so strict
 stimNoAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 
 % cue
 analyzeTimeRange = [50,350]; % Range to analyze
 alignEvent = NLX_event2num('NLX_CUE_ON');
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
 cueAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'~=1 & [validData.drug]'~=1); % does not have to be so strict
 cueNoAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData([validData.attend]'==1 & [validData.drug]'==1); % does not have to be so strict
 cueAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData([validData.attend]'~=1 & [validData.drug]'==1); % does not have to be so strict
 cueNoAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 
 % dim
-analyzeTimeRange = [-350,-50]; % Range to analyze
+analyzeTimeRange = [-310,-10]; % Range to analyze
 alignEvent = NLX_event2num('NLX_DIMMING1');
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'==1 & [validData.drug]'~=1); % attend RF + NoDrug [validData.rfDim]'==1 & 
 dimAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'~=1); % does not have to be so strict
+tempData = validData([validData.attend]'~=1 & [validData.drug]'~=1); % attend Out + NoDrug [validData.rfDim]'==1 & 
 dimNoAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'==1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData( [validData.attend]'==1 & [validData.drug]'==1); % attend RF + Drug [validData.rfDim]'==1 &
 dimAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-tempData = validData([validData.rfDim]'==1 & [validData.attend]'~=1 & [validData.drug]'==1); % does not have to be so strict
+tempData = validData( [validData.attend]'~=1 & [validData.drug]'==1); % attend Out + Drug [validData.rfDim]'==1 &
 dimNoAttDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 
 
@@ -177,23 +184,40 @@ cue_NA_D = cueNoAttDrug.meanSpikeRate / maxActivity;
 dim_A_D  = dimAttDrug.meanSpikeRate / maxActivity;
 dim_NA_D = dimNoAttDrug.meanSpikeRate / maxActivity;
 
-%Modulation
-stim_ND_Mod = (stim_A_ND-precue_ND)-(stim_NA_ND-precue_ND);
-stim_D_Mod = (stim_A_D-precue_D)-(stim_NA_D-precue_D);
+% AttentionModulation
+stim_ND_Mod = stim_A_ND - stim_NA_ND; % stim_ND_Mod = (stim_A_ND-precue_ND)-(stim_NA_ND-precue_ND);
+stim_D_Mod  = stim_A_D  - stim_NA_D; % stim_D_Mod = (stim_A_D-precue_D)-(stim_NA_D-precue_D);
 
-cue_ND_Mod = (cue_A_ND-precue_ND)-(cue_NA_ND-precue_ND);
-cue_D_Mod = (cue_A_D-precue_D)-(cue_NA_D-precue_D);
+cue_ND_Mod = cue_A_ND - cue_NA_ND;
+cue_D_Mod  = cue_A_D  - cue_NA_D;
 
-dim_ND_Mod = (dim_A_ND-precue_ND)-(dim_NA_ND-precue_ND);
-dim_D_Mod = (dim_A_D-precue_D)-(dim_NA_D-precue_D);
+dim_ND_Mod = dim_A_ND - dim_NA_ND;
+dim_D_Mod  = dim_A_D  - dim_NA_D;
 
+% Drug modulation
+dim_NA_Mod = (dim_A_ND-precue_ND)   - (dim_A_D-precue_D); 
+dim_A_Mod  = (dim_NA_ND-precue_ND)  - (dim_NA_D-precue_D);
 
-resultData.stim_ND_Mod = stim_ND_Mod;
-resultData.stim_D_Mod = stim_D_Mod;
-resultData.cue_ND_Mod = cue_ND_Mod;
-resultData.cue_D_Mod = cue_D_Mod;
-resultData.dim_ND_Mod = dim_ND_Mod;
-resultData.dim_D_Mod = dim_D_Mod;
+cue_NA_Mod = (cue_A_ND-precue_ND)   - (cue_A_D-precue_D); 
+cue_A_Mod  = (cue_NA_ND-precue_ND)  - (cue_NA_D-precue_D);
+
+stim_NA_Mod = (stim_A_ND-precue_ND)   - (stim_A_D-precue_D); 
+stim_A_Mod  = (stim_NA_ND-precue_ND)  - (stim_NA_D-precue_D);
+
+resultData.stim_ND_Mod  = stim_ND_Mod; % attention modulation of drug
+resultData.stim_D_Mod   = stim_D_Mod;
+resultData.cue_ND_Mod   = cue_ND_Mod;
+resultData.cue_D_Mod    = cue_D_Mod;
+resultData.dim_ND_Mod   = dim_ND_Mod;
+resultData.dim_D_Mod    = dim_D_Mod;
+
+resultData.dim_NA_Mod   = dim_NA_Mod; % drug modulation of attention
+resultData.dim_A_Mod    = dim_A_Mod;
+resultData.cue_NA_Mod   = cue_NA_Mod; 
+resultData.cue_A_Mod    = cue_A_Mod;
+resultData.stim_NA_Mod  = stim_NA_Mod; 
+resultData.stim_A_Mod   = stim_A_Mod;
+
 
 
 %% stastical classification of cells "classification1"
@@ -368,13 +392,26 @@ noAttData2 = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
 attStr2 = ['Attention response = ', num2str(attResponse,'%6.2f') ,'sp/s (p=',num2str(p,'%6.4f'),')'];
 
+% all cases of attention
+tempData = cellTypeData([cellTypeData.attend]'==1); % rf dims first, subject attend rf
+plotData{7} = GrcjDru1Histogram(tempData,timeArray,alignEvent,baseline); 
+attData3 = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+% attend out
+tempData = cellTypeData( ([cellTypeData.attend]'~=1)  ); % rf dims first, subject attend Out1 & Out2
+plotData{8} = GrcjDru1Histogram(tempData,timeArray,alignEvent,baseline); 
+noAttData3 = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+[~,p,ci,~]  = ttest2(attData3.nrSpikes, noAttData3.nrSpikes);
+attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
+attStr3 = ['Attention response = ', num2str(attResponse,'%6.2f') ,'sp/s (p=',num2str(p,'%6.4f'),')'];
+
 
 % combinedData = {attData,noAttData};
 % [p,table,~,~] = GroupAnovan(combinedData,'nrSpikes',{'drug','attend'},'model','full'); 
 
 
 % ###  plot cell type figure ######################
-figure('color',[1 1 1],'position', [150,150,900,700],'name',figName);
+
 histScale = max( cellfun(@(r) r.maxHist, plotData) ); % get the maximum amplitude of the histogram
 
 for i = 1:length(plotData)
@@ -384,27 +421,30 @@ for i = 1:length(plotData)
 end
 
 
+if SHOWPLOTS
+    figure('color',[1 1 1],'position', [150,150,900,700],'name',figName);
+   
+    % Visual Response
+     subplot(1,3,1);
+     title('Visual (align Dim)');
+     plotxLimits = [0 500];
+     PlotSpikeHistogram([plotData{1},plotData{2}],plotxLimits,histScale); % 
+     xlabel(visualStr);
 
-% Visual Response
- subplot(1,3,1);
- title('Visual (align Dim)');
- plotxLimits = [0 500];
- PlotSpikeHistogram([plotData{1},plotData{2}],plotxLimits,histScale); % 
- xlabel(visualStr);
- 
-% Attention Response 
- subplot(1,3,2);
- title('Attention (align Dim)');
- plotxLimits = [0 500];
- PlotSpikeHistogram([plotData{3},plotData{4}],plotxLimits,histScale); % 
- xlabel(attStr);
- 
- % Attention Response 
- subplot(1,3,3);
- title('Attention AT (align Dim)');
- plotxLimits = [0 500];
- PlotSpikeHistogram([plotData{5},plotData{4}],plotxLimits,histScale); % 
- xlabel(attStr2);
+    % Attention Response 
+     subplot(1,3,2);
+     title('Attention (align Dim)');
+     plotxLimits = [0 500];
+     PlotSpikeHistogram([plotData{3},plotData{4}],plotxLimits,histScale); % 
+     xlabel(attStr);
+
+     % Attention Response 
+     subplot(1,3,3);
+     title('Attention AT (align Dim)');
+     plotxLimits = [0 500];
+     PlotSpikeHistogram([plotData{5},plotData{4}],plotxLimits,histScale); % 
+     xlabel(attStr2);
+end
  
  resultData.fig1.text       = 'Visual and attention response align to dim';
  resultData.fig1.plotdata.visual     = plotData{1};
@@ -413,6 +453,8 @@ end
  resultData.fig1.plotdata.noAtt      = plotData{4};
  resultData.fig1.plotdata.atatt      = plotData{5};
  resultData.fig1.plotdata.atnoAtt    = plotData{6};
+ resultData.fig1.plotdata.att2       = plotData{7};
+ resultData.fig1.plotdata.noAtt2     = plotData{8};
 
  clear plotData plotxLimits histScale
  
@@ -437,21 +479,26 @@ cellData{8} = validData([validData.out2Dim]'==1 & [validData.attend]'==2); % rf 
 cellData{9} = validData([validData.out2Dim]'==1 & [validData.attend]'==3); % rf dims first, subject attend Out2
 titleString = {'Att Rf, rfDim', 'Att Out1, rfDim', 'Att Out2, rfDim','Att Rf, Out1Dim', 'Att Out1, Out1Dim', 'Att Out2, Out1Dim','Att Rf, Out2Dim', 'Att Out1, Out2Dim', 'Att Out2, Out2Dim'};
 
-% prepare the plot
-for i=1:9
-    plotData{i} = GrcjDru1Histogram(cellData{i},timeArray,alignEvent);
+if SHOWPLOTS
+    % prepare the plot
+    for i=1:9
+        plotData{i} = GrcjDru1Histogram(cellData{i},timeArray,alignEvent);
+    end
+
+
+    % plot the data 
+    histScale = max( cellfun(@(r) r.maxHist, plotData) ); % get the maximum amplitude of the histogram
+    figure('color',[1 1 1],'position', [100,100,900,700],'name',figName);
+
+    for i=1:9
+     subplot(3,3,i);
+     title(titleString{i});
+     PlotSpikeHistogram(plotData{i},plotxLimits,histScale);
+    end
 end
 
-% plot the data 
-histScale = max( cellfun(@(r) r.maxHist, plotData) ); % get the maximum amplitude of the histogram
-figure('color',[1 1 1],'position', [100,100,900,700],'name',figName);
 
-for i=1:9
- subplot(3,3,i);
- title(titleString{i});
- PlotSpikeHistogram(plotData{i},plotxLimits,histScale);
-end
-
+%% old stuff #################
 
 %% Analyze the period after the first dimming for the attend out period
 % look at eye movement too
@@ -491,9 +538,6 @@ end
 %   subplot(3,1,3);
 %  title('Attend Out2');
 %  PlotSpikeHistogram(plotData{3},plotxLimits,histScale);
-
-%% old stuff
-
 
 %% Possible align points
 
