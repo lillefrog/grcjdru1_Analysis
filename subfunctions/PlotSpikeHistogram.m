@@ -42,7 +42,7 @@ figHandle = gcf;
 hold on
 
 for i=1:size(plotData,2)    
-  if(size(plotData(i).ySpikes,1)>0)  % check if there are any spike to plot  
+  
     % default design settings
     if ~(mod(i,2) == 0) % 1,3,5
       histColor = [0.3 0.3 0.3];
@@ -89,27 +89,27 @@ for i=1:size(plotData,2)
 
     % plot the spike data
     if setup.showSpikes
-        % reorganize the spike data to line coordinates
-        xPlot = plotData(i).xSpikes; % X coordinates
-        xNaNs = nan(size(xPlot));
-        x2 = [xPlot;xPlot;xNaNs];
-        A = reshape(x2,1,[]);    
+        if(size(plotData(i).ySpikes,1)>0)  % check if there are any spike to plot  
+            % reorganize the spike data to line coordinates
+            xPlot = plotData(i).xSpikes; % X coordinates
+            xNaNs = nan(size(xPlot));
+            x2 = [xPlot;xPlot;xNaNs];
+            A = reshape(x2,1,[]);    
 
-        yPlot = plotData(i).ySpikes; % Y coordinates
-        yNaNs = nan(1,length(yPlot));
-        y2 = [yPlot;yPlot+1;yNaNs]; 
-        B = reshape(y2,1,[]) + setup.spikeShift;
-
-        setup.spikeShift = setup.spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
-
-        line(A,B,'Color',spikeColor); % plot spikes
+            yPlot = plotData(i).ySpikes; % Y coordinates
+            yNaNs = nan(1,length(yPlot));
+            y2 = [yPlot;yPlot+1;yNaNs]; 
+            B = reshape(y2,1,[]) + setup.spikeShift;
+            setup.spikeShift = setup.spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
+            line(A,B,'Color',spikeColor); % plot spikes
+        else
+            disp('No spikes in some conditions, These conditions will not be plotted');  
+        end
     else
         ylim([0 100]);
     end
     
-  else
-    disp('No spikes in some conditions, These conditions will not be plotted');  
-  end
+
 end
     
 % I'm not sure if this scale actually means anything
