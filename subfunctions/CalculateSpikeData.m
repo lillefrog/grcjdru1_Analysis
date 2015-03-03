@@ -31,7 +31,7 @@ function [rateData] = CalculateSpikeData(xData,timeRange,alignEvent)
 nrSpikes = zeros(1,length(xData));
 totalInterSpikeTime = 0; % sum of all interspike intervals
 nInterSpike = 0; % number of interspike intervals
-ffWindow = [-200 200];
+ffWindow = [-100 100];
 spikeBinArr = zeros(length(timeRange(1):timeRange(2)),length(xData));
 
 for i=1:length(xData)
@@ -74,6 +74,7 @@ rateData.duration = duration;
 
 rateData.meanSpikeNr = nanmean(nrSpikes);
 rateData.stdSpikeNr = std(nrSpikes);
+rateData.varSpikeNr2 = var(nrSpikes);
 rateData.maxSpikeNr = max(nrSpikes);
 rateData.minSpikeNr = min(nrSpikes);
 
