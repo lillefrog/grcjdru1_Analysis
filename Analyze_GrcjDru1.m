@@ -125,7 +125,7 @@ preCueDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 
 % Activity
 % stim
-analyzeTimeRange = [50,350]; % Range to analyze
+analyzeTimeRange = [50,1050]; % Range to analyze
 alignEvent = NLX_event2num('NLX_STIM_ON');
 tempData = validData([validData.attend]'==1 & [validData.drug]'~=1); % does not have to be so strict
 stimAttNoDrug = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
@@ -354,21 +354,23 @@ visualStr = ['visual response = ', num2str(visualResponse,'%6.2f') ,'sp/s (p=',n
 
 % ## Attention Response ######################
 % timeArray=(-1000:2000); 
-% analyzeTimeRange = [50,150]; % Range to analyze
-% alignEvent = NLX_event2num('NLX_CUE_ON');
+analyzeTimeRange = [-300,300]; % Range to analyze
+alignEvent = NLX_event2num('NLX_DIMMING1');
 
 
 % attend in
 tempData = cellTypeData([cellTypeData.rfDim]'~=1 & [cellTypeData.attend]'==1); % rf dims first, subject attend Out1 & Out2
 plotData{3} = GrcjDru1Histogram(tempData,timeArray,alignEvent,baseline); 
 attData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-attData.drug = 0; attData.attend = 1; 
+attData.attend = 1; % attData.drug = 0; 
 
 % attend out
 tempData = cellTypeData( ([cellTypeData.out1Dim]'==1 & [cellTypeData.attend]'==3) | ([cellTypeData.out2Dim]'==1 & [cellTypeData.attend]'==2) ); % rf dims first, subject attend Out1 & Out2
 plotData{4} = GrcjDru1Histogram(tempData,timeArray,alignEvent,baseline); 
 noAttData = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
-noAttData.drug = 0; noAttData.attend = 0; 
+noAttData.attend = 0; % noAttData.drug = 0; 
+
+
 
 [~,p,ci,~]  = ttest2(attData.nrSpikes, noAttData.nrSpikes);
 attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
@@ -376,8 +378,8 @@ attStr = ['Attention response = ', num2str(attResponse,'%6.2f') ,'sp/s (p=',num2
 
 % ## Alex Attention Response ######################
 % timeArray=(-1000:2000); 
-analyzeTimeRange = [150,450]; % Range to analyze
-%alignEvent = NLX_event2num('NLX_CUE_ON');
+analyzeTimeRange = [50,350]; % Range to analyze
+alignEvent = NLX_event2num('NLX_DIMMING1');
 
 % attend in
 tempData = cellTypeData([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'==1); % rf dims first, subject attend rf
@@ -387,6 +389,8 @@ attData2 = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
 tempData = cellTypeData( ([cellTypeData.rfDim]'==1 & [cellTypeData.attend]'~=1)  ); % rf dims first, subject attend Out1 & Out2
 plotData{6} = GrcjDru1Histogram(tempData,timeArray,alignEvent,baseline); 
 noAttData2 = CalculateSpikeData(tempData,analyzeTimeRange,alignEvent);
+
+
 
 [~,p,ci,~]  = ttest2(attData2.nrSpikes, noAttData2.nrSpikes);
 attResponse = mean(ci)*1000 / (analyzeTimeRange(2)-analyzeTimeRange(1));
@@ -457,6 +461,27 @@ end
  resultData.fig1.plotdata.noAtt2     = plotData{8};
 
  clear plotData plotxLimits histScale
+ 
+ 
+ %% Alalyze Fano Factors
+ 
+ 
+% store the data for later analysis
+resultData.classification3.ATattData = attData2;
+resultData.classification3.ATnoAttData = noAttData2;
+resultData.classification3.ATtimeWindow = analyzeTimeRange;
+resultData.classification3.ATalignTo = alignEvent;
+resultData.classification3.ATnote = 'dimming in RF. tt RF or Avay';
+
+
+% store the data for later analysis
+resultData.classification3.attData = attData;
+resultData.classification3.noAttData = noAttData;
+resultData.classification3.timeWindow = analyzeTimeRange;
+resultData.classification3.alignTo = alignEvent;
+resultData.classification3.note = 'dimming out2 attend RF or Out1';
+
+
  
  
 %% Analyze the period after the first dimming for the attend out period
@@ -762,3 +787,7 @@ end
 % text(0.1, 1,figTitle,'VerticalAlignment', 'top','Interpreter', 'none'); 
 % 
 % end
+
+
+%% supplementary functions
+
