@@ -1,4 +1,7 @@
 function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
+% Function for analyzing saccade tasks. Requires a spikefile and a selected
+% cell. you can optional give it some settings in a structure.
+
 
 % Ask for the spike filename if it is not given
  if nargin<1 || isempty(spikeFileName);
@@ -11,9 +14,9 @@ function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
 %% settings
 
  % default setup
- defaultSetup.showfig = true;
- defaultSetup.saveFigPath = 'E:\temp'; % E:\temp
- defaultSetup.saveFileName = 'E:\temp\test.mat'; % E:\temp\test.mat
+ defaultSetup.showfig = false;
+ defaultSetup.saveFigPath = ''; % E:\temp
+ defaultSetup.saveFileName = ''; % E:\temp\test.mat
 
  if nargin<3 || ~exist('setup','var')
      % if no setup is supplied use the default
@@ -30,7 +33,7 @@ function [resultData] = Analyze_MsaccData(spikeFileName,selectedCell,setup)
 %% Read data 
 
 if exist(spikeFileName,'file')
-    [eventFilename,cortexFilename] = GetGrcjdru1Filenames(spikeFileName);
+    [eventFilename,cortexFilename,iniFileName] = GetGrcjdru1Filenames(spikeFileName);
 else
     disp(['File not found ', spikeFileName]);
     return;
@@ -72,6 +75,8 @@ resultData.spkWidth = spkWidth;
 [ctxDataTemp] = CTX_Read2Struct(cortexFilename);
 ctxData = CleanCtxSaccp3Events(ctxDataTemp);
 allData = AlignCtxAndNlxData(dividedSpikeArray,dividedEventfile,ctxData);
+
+resultData.iniValues = ReadINI(iniFileName);
 
 allData = GetEOGsaccadeTime(allData);
 clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
@@ -133,11 +138,11 @@ subPlotHight = 0.15;
 nrDirections = 9;
 
 % initialize the figure
-mainFig = figure('color',[1 1 1],'position', [100,100,900,900]);
+
 maxHist =0; % initialize scale factor for histograms
 plotData = cell(nrDirections,1);
 posSubplot = cell(nrDirections,1);
-hold on
+
 
 % calculate the histograms for all directions
 for i=1:nrDirections
@@ -167,6 +172,8 @@ end
 
 
 if setup.showfig
+    mainFig = figure('color',[1 1 1],'position', [100,100,900,900]);
+    hold on
     % plot the histograms for all directions
     for i=1:nrDirections
         subplot('position',posSubplot{i}); % Make a subplot at a definded position
@@ -199,17 +206,17 @@ if setup.showfig
     text(0.4,0.31, [' pVal: ',num2str(saccOnDirecC.bootVlengthPval)], 'Color',[.2 .2 1]);
 
     if exist(setup.saveFigPath,'dir') % save the figure 
-        figFileName = [setup.saveFigPath,'\',name,ext,'_',num2str(resultData.Cell),'.png'];
-        set(mainFig, 'PaperUnits', 'inches');
-        set(mainFig, 'PaperPosition', [0 0 8 8]);
-        print(mainFig,'-dpng','-r300',figFileName);
-        disp(['Figur Saved as: ',figFileName]);
-        %close(mainFig);
+        figFileName = [setup.saveFigPath,'\',name,ext,'_',num2str(resultData.Cell),'.png']; % I save it as png
+        set(mainFig, 'PaperUnits', 'inches'); % measure the size in inches
+        set(mainFig, 'PaperPosition', [0 0 8 8]); % plot it in the corner and set the size to 8x8 
+        print(mainFig,'-dpng','-r300',figFileName); % I use print to save it
+        disp(['Figur Saved as: ',figFileName]);% good to know that it worked and where it got saved
     end
+    hold off
 end
 
 
-hold off
+
 
 %% select and save the output data
 resultData.saccOnDirec = saccOnDirecA;
@@ -231,6 +238,93 @@ if (length(setup.saveFileName)>2)
     end
 end
  
+
+%% plot figure with all eye movements
+
+figure('color',[1 1 1],'position', [100,100,900,900]);
+hold on
+axis([-10 10 -10 10],'square');
  
 
+ for direction=1:nrDirections
+    tempData = validData([validData.condition]'==(direction-1));
+    for trial = 1:length(tempData)
+        EOGdata = tempData(trial).EOGArray;
+        
+        [EyeArrayX,EyeArrayY] = CalibrateEyeData(EOGdata,resultData.iniValues);
+        
+        currentEventArray = tempData(trial).eventArray; 
+        startEvent = currentEventArray(:,2)==CTX_event2num('START_EYE_DATA'); % get the start time of the eye tracking
+        startTime = currentEventArray(startEvent,1);
+        endEvent = currentEventArray(:,2)==CTX_event2num('END_EYE_DATA'); % get the end time of the eye tracking
+        endTime = currentEventArray(endEvent,1);
+        fixOnEvent =   currentEventArray(:,2)==CTX_event2num('FIXATION_OCCURS');
+        fixOnTime = currentEventArray(fixOnEvent,1);
+        timeStamps = linspace(startTime,endTime,length(EyeArrayX));
+        baseline = (timeStamps>(fixOnTime(1)+50)) & (timeStamps<(fixOnTime(1)+450));
+        
+        xBaseline = mean(EyeArrayX(baseline));
+        yBaseline = mean(EyeArrayY(baseline));
 
+
+        % normalize to baseline
+        EyeArrayX = EyeArrayX - xBaseline;
+        EyeArrayY = EyeArrayY - yBaseline;
+        
+        plot(EyeArrayX,EyeArrayY);   
+        %disp(['direction ',num2str(direction),' trial',num2str(trial)]);
+        %pause
+    end
+    position = tempData(1).positionTarget;
+    plot(position(1),position(2),'ok','MarkerSize', 6,'LineWidth',1, 'MarkerEdgeColor','k','MarkerFaceColor',[0.9,0.9,0.0]); % ,'MarkerFaceColor',[0.5,0.5,0.5]
+    rectangle('Position',[position(1)-1, position(2)-1, 2, 2]);
+ end
+ % draw large cross marking [0,0]
+line([0 0],[-10 10],'color',[.8 .8 .8]);
+line([-10 10],[0 0],'color',[.8 .8 .8]);
+xlabel('X coordinate');
+ylabel('Y coordinate'); 
+ hold off
+
+
+function [EyeArrayX,EyeArrayY] = CalibrateEyeData(EOGdata,settings)
+% settings can come from settings = resultData.iniValues.Hardware;
+% or it can be written directly as a structure. (see the default settings
+% for structure.
+
+% default settings
+CORTEX_RESOLUTION =     [4096, 4096];
+SCREEN_RESOLUTION =     [1280, 1024];
+PIXELS_PER_DEGREE =     [32.63, 32.63];
+
+% % wyman settings
+% CORTEX_RESOLUTION =     [4096, 4096];
+% SCREEN_RESOLUTION =     [1280, 1024];
+% PIXELS_PER_DEGREE =     [49.66, 49.66];
+
+if nargin>1
+    if isfield(settings,'Hardware') % if there is a Hardware field we need the subfields.
+        settings = settings.Hardware;
+    end
+    
+    if isfield(settings,'voltageResolution');
+        CORTEX_RESOLUTION = [settings.voltageResolution, settings.voltageResolution];
+    end
+    
+    if isfield(settings,'screenResolutionX');
+        SCREEN_RESOLUTION = [settings.screenResolutionX , settings.screenResolutionX];
+    end
+    
+    if isfield(settings,'pixelsPrDegreeX');
+        PIXELS_PER_DEGREE = [settings.pixelsPrDegreeX , settings.pixelsPrDegreeY];
+    end
+end
+
+disp(['EOG min=',num2str(min(EOGdata)),' EOG max=',num2str(max(EOGdata))]);
+
+% calculate scaling
+ScalingFactor =  SCREEN_RESOLUTION ./ (CORTEX_RESOLUTION .* PIXELS_PER_DEGREE);
+        
+% split data and scale it
+EyeArrayX = EOGdata(1:2:end) * ScalingFactor(1);
+EyeArrayY = EOGdata(2:2:end) * ScalingFactor(2);
