@@ -5,6 +5,7 @@ function plotAttentionModulation(resultData)
 % selection criteria
 pAtt = .05;
 pDrug = .05;
+spikeWidthThreshold = [0 10000];
 % or 
 pInteract = 0.05;
 
@@ -43,7 +44,7 @@ for i=1:length(resultData)
 end
 
 
-selected = ( pValues(:,1)<pAtt ) & ( pValues(:,3)<pDrug ) & ( spikeWidth(:)>200 );
+selected = ( pValues(:,1)<pAtt ) & ( pValues(:,3)<pDrug ) & ( spikeWidth(:)>spikeWidthThreshold(1) ) & ( spikeWidth(:)<spikeWidthThreshold(2) ) ; % 
 dim_ND_Mod = dim_ND_Mod(selected) ;
 dim_D_Mod = dim_D_Mod(selected);    
 cue_ND_Mod = cue_ND_Mod(selected);
@@ -51,18 +52,19 @@ cue_D_Mod = cue_D_Mod(selected);
 stim_ND_Mod = stim_ND_Mod(selected);
 stim_D_Mod = stim_D_Mod(selected) ;
 
-%drug modulation
-dim_NA_Mod  = dim_NA_Mod(selected);
-dim_A_Mod   = dim_A_Mod(selected);  
-cue_NA_Mod  = cue_NA_Mod(selected);
-cue_A_Mod   = cue_A_Mod(selected); 
-stim_NA_Mod = stim_NA_Mod(selected);
-stim_A_Mod  = stim_A_Mod(selected); 
+% %drug modulation
+% dim_NA_Mod  = dim_NA_Mod(selected);
+% dim_A_Mod   = dim_A_Mod(selected);  
+% cue_NA_Mod  = cue_NA_Mod(selected);
+% cue_A_Mod   = cue_A_Mod(selected); 
+% stim_NA_Mod = stim_NA_Mod(selected);
+% stim_A_Mod  = stim_A_Mod(selected); 
 
+selectionString = (['CNQX   P-Atten<',num2str(pAtt),'   P-drug<',num2str(pDrug),'   spikewidth=[',num2str(spikeWidthThreshold),']']);
 disp(['N=',num2str(sum(selected)),'/',num2str(length(selected))])
 
 %% Plot Attentional Modulation
-figure('color',[1 1 1],'position', [150,700,1500,400],'name','Attentional Modulation');
+figure('color',[1 1 1],'position', [150,700,1500,400],'name',['Attentional Modulation ',selectionString]);
 hold on
 
 subplot(1,4,1);
@@ -93,6 +95,13 @@ set(gca, 'TickDir', 'out')
 %outtext=(['p(signrank): ', num2str(p, '%4.3f')]);
 outtext=(['p(signrank): ', num2str(p, '%4.3f'),' (N=',num2str(length(ModulationIndex)),')']);
 xlabel(outtext);
+
+% make a main title
+set(gcf,'NextPlot','add');
+axes;
+h = title(selectionString);
+set(gca,'Visible','off');
+set(h,'Visible','on');
     
     
 %% Plot Drug Modulation
