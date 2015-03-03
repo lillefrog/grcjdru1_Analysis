@@ -36,7 +36,7 @@ centerX = 0.5;
 centerY = 0.5;
 
 
-hold on
+
 
 % Calculate the data for the polar plot
 for i=1:nrPositions
@@ -88,7 +88,8 @@ if SHOWPLOTS
 %     else
         scf=0.6;
 %     end
-    
+    hold on
+
     % plot circle
     ang=0:0.01:2*pi; 
     xCircle=radius*cos(ang)*scf;
@@ -104,9 +105,10 @@ if SHOWPLOTS
     xPolar(i+1)=xPolar(1); % plot a line back to pos1
     yPolar(i+1)=yPolar(1);
     plot(centerX+xPolar*scf,centerY+yPolar*scf,'-o','color',figColor);
+    hold off
 end
 
-hold off
+
 
 
 
