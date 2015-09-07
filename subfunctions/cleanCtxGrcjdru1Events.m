@@ -61,6 +61,20 @@ for i = 1:length(ctxData);
     end
     drugOld = trialData.drug;
     ctxDataOut(i).drugChangeCount = drugChangeCount;
+    
+    % target color
+    if trialData.targetDim==trialData.rfDim
+        ctxDataOut(i).targetColor = trialData.color_In;
+    elseif trialData.targetDim==trialData.out1Dim
+        ctxDataOut(i).targetColor = trialData.color_Out1;
+    elseif trialData.targetDim==trialData.out2Dim
+        ctxDataOut(i).targetColor = trialData.color_Out2;
+    else
+        ctxDataOut(i).targetColor = [-1 -1 -1];
+    end
+    
+    
+    
  else 
     ctxDataOut(i).error           = trialData.error; 
  end

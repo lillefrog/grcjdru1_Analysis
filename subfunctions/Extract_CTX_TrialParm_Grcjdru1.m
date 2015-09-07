@@ -121,9 +121,8 @@ parm = cortex_event_arr(isHeader, 2)- PARAMBASE;
     end
 
     
-    
- 
-    newEventArray= cortex_event_arr(~isHeader,:); % the event array without the header
+   
+    newEventArray = cortex_event_arr(~isHeader,:); % the event array without the header
     
 
 

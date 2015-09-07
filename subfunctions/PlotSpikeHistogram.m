@@ -19,6 +19,9 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,setup)
 %       .showError Show standart error of the mean if avalible
 %       .show95Confidence show 95% confidence intervals, if set to true it
 %           overrides the showError setting
+%
+% Output
+%   Handle to the figure
 
 
  % default setup these will be used unless overwritten
@@ -28,6 +31,11 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,setup)
  defaultSetup.smoothHisto = true;
  defaultSetup.showError = false;
  defaultSetup.show95Confidence = false;
+ % are only used if no color is set in the raw data
+ defaultSetup.histColorNoDrug   = [0.3 0.3 0.3];
+ defaultSetup.histColorDrug     = [0   0     0];
+ defaultSetup.spikeColorNoDrug  = [0.3 0.3 0.3];
+ defaultSetup.spikeColorDrug    = [0   0   0  ]; 
 
  if nargin<4 || ~exist('setup','var')
      % if no setup is supplied use the default
@@ -39,18 +47,19 @@ function [figHandle] = PlotSpikeHistogram(plotData,xLimits,histScale,setup)
 
 % initialize
 figHandle = gcf;
+dataName = '';
 hold on
 
 for i=1:size(plotData,2)    
   
     % default design settings
     if ~(mod(i,2) == 0) % 1,3,5
-      histColor = [0.3 0.3 0.3];
-      spikeColor = [0.3 0.3 0.3];
+      histColor = setup.histColorNoDrug;
+      spikeColor = setup.spikeColorNoDrug;
       histLineWidth = 1;
     else
-      histColor = [0 0 0];
-      spikeColor = [0 0 0];
+      histColor = setup.histColorDrug;
+      spikeColor = setup.spikeColorDrug;
       histLineWidth = 2;
     end
     
@@ -68,6 +77,10 @@ for i=1:size(plotData,2)
         histColor = plotData(i).histColor ;
     end
     
+    if isfield(plotData, 'name')
+        dataName = plotData(i).name ;
+    end
+    
     % plot the histogram
     if setup.smoothHisto
         histogram = (gaussfit(30,0,plotData(i).yHistogram)/(histScale))*100; % smoothe the histogram
@@ -78,13 +91,14 @@ for i=1:size(plotData,2)
     if setup.showHistos
         if setup.show95Confidence
             errorbars = (plotData(i).yHistogramSEM/histScale) * 100 * 1.96; % 95% confidence interval;
-            PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);
+            HLine = PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);
         elseif setup.showError
             errorbars = (plotData(i).yHistogramSEM/histScale) * 100; % we plot on a scale from 0 to 100
-            PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);            
+            HLine = PlotwithErrorbars(plotData(i).xHistogram, histogram, errorbars, 'LineWidth',histLineWidth,'Color',histColor);            
         else
-            plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
+            HLine = plot(plotData(i).xHistogram, histogram, 'LineWidth',histLineWidth,'Color',histColor);
         end  
+        set(HLine,'DisplayName',dataName);
     end
 
     % plot the spike data
@@ -101,7 +115,8 @@ for i=1:size(plotData,2)
             y2 = [yPlot;yPlot+1;yNaNs]; 
             B = reshape(y2,1,[]) + setup.spikeShift;
             setup.spikeShift = setup.spikeShift + max(max(yPlot)) + 10; % add some distance between the datasets
-            line(A,B,'Color',spikeColor); % plot spikes
+            HSpike = line(A,B,'Color',spikeColor); % plot spikes
+            set(get(get(HSpike,'Annotation'),'LegendInformation'),'IconDisplayStyle','off'); % Exclude spikes from legend
         else
             disp('No spikes in some conditions, These conditions will not be plotted');  
         end
@@ -127,7 +142,7 @@ xlim(xLimits);
 hold off
 
 
-function PlotwithErrorbars(X,Y,Err,varargin)
+function lineHandle = PlotwithErrorbars(X,Y,Err,varargin)
 % you might want to be sure hold in on before using this function?
 
 % set how much lighter the error area compared to the main line
@@ -166,8 +181,10 @@ yPatch(isnan(yPatch))=[];
 zPatch = ones(size(yPatch))*(-0.01); % add a small z value to push the patch behind the rest of the plot
 H.patch=patch(xPatch,yPatch,zPatch,1,'facecolor',dimColor,'edgecolor','none');          
 
+set(get(get(H.patch,'Annotation'),'LegendInformation'),'IconDisplayStyle','off'); % Exclude patch from legend
+
 % plot the main line
-plot(X, Y, 'Color',mainColor,'LineWidth',mainLineWidth);
+lineHandle = plot(X, Y, 'Color',mainColor,'LineWidth',mainLineWidth);
 
 
 
