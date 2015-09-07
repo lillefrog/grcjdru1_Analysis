@@ -2,7 +2,7 @@ function PlotPopulationHistograms(plotDataArray)
 % plot population data for figure 1
 
 pAtt = 0.05;
-pDrug = 1;
+pDrug = 0.05;
 pVis = 0.00;
 
 n1 = length(plotDataArray);
@@ -47,7 +47,7 @@ title('Dim vs NoDim');
 % Attention response2
 subplot(1,3,3);
 histScale = outData.fig1.plotdata.atatt.maxHist;
-plotxLimits = [-1000 1000];
+plotxLimits = [-1000 0];
 myPlotDataAtAtt = outData.fig1.plotdata.atatt;
 myPlotDataNoAtAtt = outData.fig1.plotdata.atnoAtt;
 %tempPlotData = subtractPlotData(myPlotDataAtAtt,myPlotDataNoAtAtt);
@@ -65,11 +65,15 @@ histScale = outData.fig1.plotdata.att2.maxHist;
 plotxLimits = [-900 0];
 myPlotDataAtt2 = outData.fig1.plotdata.att2;
 myPlotDataNoAtt2 = outData.fig1.plotdata.noAtt2;
-PlotSpikeHistogram([myPlotDataAtt2,myPlotDataNoAtt2],plotxLimits,histScale,setup);%,tempPlotData
+PlotSpikeHistogram([myPlotDataAtt2],plotxLimits,histScale,setup);%Att in
+hold on
+myPlotDataNoAtt2(1).histColor = [0 0 .9];
+myPlotDataNoAtt2(2).histColor = [0 0 .4];
+PlotSpikeHistogram([myPlotDataNoAtt2],plotxLimits,histScale,setup);% Att out
 ylim(ylimits);
 set(gca,'YTick',[ylimits(1) 0 ylimits(2)]);
 set(gca,'YTicklabel',[ylimits(1)/100 0 ylimits(2)/100]);
-title('Attend vs NoAttend (APV)');
+title('Attend vs NoAttend (CNQX)');
 
 
 %%%% supporting functions %%%%
