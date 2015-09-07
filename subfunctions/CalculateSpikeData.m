@@ -74,7 +74,7 @@ rateData.duration = duration;
 
 rateData.meanSpikeNr = nanmean(nrSpikes);
 rateData.stdSpikeNr = std(nrSpikes);
-rateData.varSpikeNr2 = var(nrSpikes);
+rateData.varSpikeNr2 = nanvar(nrSpikes);
 rateData.maxSpikeNr = max(nrSpikes);
 rateData.minSpikeNr = min(nrSpikes);
 
