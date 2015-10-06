@@ -27,13 +27,16 @@ close all
   resultData.cellSorting = cellSorting;  
  end
  
+ %spikeFileName = 'E:\WymanRawData\PEN256\NLX_control\2015-09-10_14-20-38\GRCJDRU1.73 ON_GRCJDRU1.73 OFFSE17_cb3.NSE'; % dopamine
+ %spikeFileName = 'E:\WymanRawData\PEN253\NLX_control\2015-09-04_15-43-29\GRCJDRU1.69 ON_GRCJDRU1.69 OFFSE17_cb3.NSE'; % SCH23390
  
-[eventFilename,cortexFilename,iniFileName] = GetGrcjdru1Filenames(spikeFileName);
+[eventFilename,cortexFilename,iniFileName,eyeFileName] = GetGrcjdru1Filenames(spikeFileName);
 
 % Read the NLX event file and cut out the part related to our experiment
 [automaticEvents,manualEvents] = NLX_ReadEventFile(eventFilename);
 [manualStartEvent,manualStopEvent] = GetStartStopEvents(cortexFilename,manualEvents);
 [cutEventfile] = NLX_CutEventfile(automaticEvents,manualEvents,manualStartEvent,manualStopEvent);
+resultData.nlxStartTime = min([automaticEvents(1,1) manualEvents{1,1}]); % get the first timestamp in the nlx file
 clear manualStartEvent manualStopEvent manualEvents automaticEvents
 
 % Split the event file up in trials
@@ -75,6 +78,9 @@ clear dividedSpikeArray dividedEventfile ctxData ctxDataTemp
 % read the ini file if it exist
 resultData.iniValues = ReadINI(iniFileName);
 
+% read the raw eye data if it exists
+[rawData,markers,headerText] = readRawEyeData(eyeFileName);
+
 % check for drift of the activity
 [driftRval,driftPval] = calculateDrift(allData);
 resultData.driftRval = driftRval;
@@ -85,6 +91,68 @@ resultData.driftPval = driftPval;
 %     allData = SwitchReceptiveField( allData, resultData.iniValues.recording.replaceRF );
 % end
 
+%% align the raw eyetracking data with the event data
+
+
+isCorrect    = [allData.correctTrial]';
+correctData    = allData(isCorrect);
+isDrug      = [correctData.drug]';
+
+%eventData = correctData(2).nlxEvents;
+
+fixtimes = zeros(length(correctData),5);
+for i = 1:length(correctData)
+    eventData = correctData(i).nlxEvents;
+    eyeEvents{i} = eventData;
+    startFix = eventData(find(eventData(:,2)==4,1,'last'),1);
+    endFix = eventData(find(eventData(:,2)==32,1,'last'),1);
+    stimOn = eventData(find(eventData(:,2)==8,1,'last'),1);
+    cueOn = eventData(find(eventData(:,2)==20,1,'last'),1);
+    testDimmed = eventData(find(eventData(:,2)==17,1,'last'),1);
+    
+   fixtimes(i,1) = startFix;
+   fixtimes(i,2) = endFix;
+   fixtimes(i,3) = stimOn;
+   fixtimes(i,4) = cueOn;
+   fixtimes(i,5) = testDimmed;
+end
+%firstTimestamp = fixtimes(1,1);
+% emptyCells = cellfun(@isempty,fixationStart); %# find empty cells
+% fixationStart(emptyCells) = []; %# remove empty cells
+% fixationStartD = [fixationStart{:}]; % convert to array of double
+%timeShift = 70.83; %pen253
+%timeShift = 126.43; %pen256
+if resultData.iniValues.INIfileFound && isfield(resultData.iniValues.recording,'eyeTrackingTimediff')
+    timeShift = resultData.iniValues.recording.eyeTrackingTimediff;
+    correctedFixTimes = (fixtimes(:,:)-resultData.nlxStartTime)/1000000+timeShift;
+else
+    %timeShift = 126.43; %pen256
+    plot(rawData{1,1}(1:end-1),rawData{1,2});
+    hold on
+    correctedFixTimes = (fixtimes(:,:)-resultData.nlxStartTime)/1000000+timeShift;
+    plot(correctedFixTimes(:,1), 0.5*ones(1,length(fixtimes)),'xk');
+end
+% plot(rawData{1,1}(1:end-1),rawData{1,5});
+% hold on
+% %correctedFixTimes = (fixtimes(:,:)-resultData.nlxStartTime)/1000000+timeShift;
+% plot(correctedFixTimes(:,1), 0.1*ones(1,length(fixtimes)),'xk');
+
+for i=1:length(correctedFixTimes)
+   stamps =  find(correctedFixTimes(i,1)<rawData{1,1} & rawData{1,1}<correctedFixTimes(i,2));
+   pupilTime{i}  = rawData{1,1}(stamps)-timeShift; % timestamps calculated in neuralynx time
+   pupilWidth{i} = rawData{1,4}(stamps); % width
+   pupilHight{i} = rawData{1,5}(stamps); % hight
+end
+resultData.eye.pupilTime = pupilTime;
+resultData.eye.pupilWidth = pupilWidth;
+resultData.eye.pupilHight = pupilHight;
+resultData.eye.eyeEvents = eyeEvents;
+resultData.eye.isDrug = isDrug;
+% figure
+% for i = 1:20
+% plot(pupilTime{i}-correctedFixTimes(i,4),pupilWidth{i})
+% hold on
+% end
 
 %% select what to Analyze. This is the place where we select the overall trials to use.
 % some selection might go on in the analysis but this is the general
