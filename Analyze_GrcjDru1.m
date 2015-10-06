@@ -126,7 +126,7 @@ if resultData.iniValues.INIfileFound && isfield(resultData.iniValues.recording,'
     timeShift = resultData.iniValues.recording.eyeTrackingTimediff;
     correctedFixTimes = (fixtimes(:,:)-resultData.nlxStartTime)/1000000+timeShift;
 else
-    %timeShift = 126.43; %pen256
+    timeShift = 94.3;
     plot(rawData{1,1}(1:end-1),rawData{1,2});
     hold on
     correctedFixTimes = (fixtimes(:,:)-resultData.nlxStartTime)/1000000+timeShift;

@@ -11,12 +11,34 @@ function [outData] = GetGrcjDru1Summary(cortexFilename)
 % Requirements:
 %  
 
-% cortexFilename = 'F:\wyman4\DATA\SACCP4.11';
+%cortexFilename = 'E:\WymanRawData\PEN253\Cortex\150904\GRCJDRU1.69';
 
 % Ask for the spike filename if it is not given
- if nargin<1 || isempty(cortexFilename) || ~exist(cortexFilename,'file');
-    [fileName,filePath] = uigetfile('*.*','open a cortex data file','MultiSelect','off'); 
+%  if nargin<1
+%     disp('nargin less than one');
+%     if isempty(cortexFilename)
+%      disp('empthy cortexFilename');
+%     end
+%     if ~exist(cortexFilename,'file')
+%      disp('cortexFilename does not exist');
+%     end
+%  end
+ 
+
+ if nargin<1 %||  || ;
+     
+    disp('trying to open dialog');
+    [fileName,filePath] = uigetfile('*.*','open a cortex data file','MultiSelect','off');
+    disp('dialog open');
     cortexFilename = fullfile(filePath,fileName);
+ end
+ 
+ if isempty(cortexFilename)
+     error(['"',cortexFilename,'" not a valid file name']);
+ end
+ 
+ if ~exist(cortexFilename,'file')
+     error([cortexFilename,' not found']);
  end
 
 % read the cortex file
@@ -64,7 +86,7 @@ nConditionsCorrect = hist(conditionsCorrect,0:1:max(conditionsCorrect));
 
 outData.PercentCorrect = (nConditionsCorrect./nConditions)*100;
 
-% Check distribution of bloks
+% Check distribution of blocks
 blocks = [ctxData.block]';
 outData.nblocks = histc(blocks,0:1:max(blocks));
 
@@ -84,6 +106,9 @@ for i = 1:length(myFields)
     outData.(myFields{i}) = meanMaxMin(   [timingData.(myFields{i})]'  );
 end
 
+preCueDelayArray = [timingData.('preCueDelay')]';
+preDim1DelayArray = [timingData.('dim1Delay')]';
+
 % outData.PreFixDelay  = meanMaxMin([timingData.preFixDelay]');
 % outData.FixDelay     = meanMaxMin([timingData.FixDelay]');
 % outData.preStimDelay = meanMaxMin([timingData.preStimDelay]');
@@ -98,6 +123,23 @@ end
 outData.ctxData = ctxData;
 
 %% plot figures
+
+
+% preCueDelay Distribution
+figure('color',[1 1 1],'position', [150,150,1000,600],'name','PreCueDelay distribution'); 
+hist(preCueDelayArray);
+title(cortexFilename);
+xlabel('preCue Delay in mS');
+ylabel('Number of occurences');
+
+% preDIMDelay Distribution
+figure('color',[1 1 1],'position', [150,150,1000,600],'name','PreDIMDelay distribution'); 
+hist(preDim1DelayArray);
+title(cortexFilename);
+xlabel('preDIM Delay in mS');
+ylabel('Number of occurences');
+
+
 
 figure('color',[1 1 1],'position', [150,150,1000,600],'name',cortexFilename); % create the figure for the text
 axis('off'); % hide the axis

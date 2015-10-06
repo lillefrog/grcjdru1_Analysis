@@ -5,7 +5,7 @@ function [StartEvent,StopEvent] = GetStartStopEvents(cortexFilename,manualEvents
 
 
 % seperate the filename from path since we don't need the path
-[crap,name,ext] = fileparts(cortexFilename); 
+[~,name,ext] = fileparts(cortexFilename); 
 
 % convert to lowercase since the most common mistake is using a capital
 % letter in the event file

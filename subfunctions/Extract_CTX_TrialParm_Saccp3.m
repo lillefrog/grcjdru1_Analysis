@@ -34,6 +34,7 @@ if length(headerEndpoints)<2 % check to see if there is a header
    return 
 elseif (headerEndpoints(2)-headerEndpoints(1)) ~= HEADERLENGTH % check to see if it has the right length
    extractedData.error = true; 
+   warning('Header has wrong length');
    return     
 end
 
